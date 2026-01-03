@@ -26,7 +26,8 @@ Want to help with translation ? Please refer to language file in [`generated/lan
 <br>
 
 ## Credits
-- **MrGhastien** (Contributors)
+- **MrGhastien** (Contributor)
+- **UncleTyrone** (Contributor -> 1.21 Port)
 - **lev** (Artist -> Logo)
 - **FracturedGradient** (Artist -> Some items textures)
 - **Janko** (Artist -> Industrial Crucible textures)
