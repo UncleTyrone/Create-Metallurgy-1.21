@@ -1,13 +1,13 @@
 modLoader="javafml"
 loaderVersion="${loader_version_range}"
 license="${mod_license}"
-issueTrackerURL="https://github.com/Lucreeper74/Create-Metallurgy/issues"
+issueTrackerURL="https://github.com/UncleTyrone/Create-Metallurgy-1.21/issues"
 
 [[mods]]
 modId="${mod_id}"
 version="${mod_version}"
 displayName="${mod_name}"
-displayURL="https://github.com/UncleTyrone/Create-Metallurgy"
+displayURL="https://github.com/UncleTyrone/Create-Metallurgy-1.21"
 logoFile="createmetallurgy.png"
 authors="${mod_authors}"
 description='''${mod_description}'''
