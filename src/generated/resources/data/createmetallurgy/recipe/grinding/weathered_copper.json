@@ -1,0 +1,15 @@
+{
+  "id": "createmetallurgy:grinding/weathered_copper",
+  "type": "createmetallurgy:grinding",
+  "ingredients": [
+    {
+      "item": "minecraft:weathered_copper"
+    }
+  ],
+  "processingTime": 50,
+  "results": [
+    {
+      "id": "minecraft:exposed_copper"
+    }
+  ]
+}

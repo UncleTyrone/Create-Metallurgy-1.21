@@ -1,0 +1,16 @@
+{
+  "id": "createmetallurgy:crafting/light_bulbs/blue_light_bulb_from_other_light_bulb",
+  "type": "minecraft:crafting_shapeless",
+  "category": "redstone",
+  "ingredients": [
+    {
+      "tag": "c:dyes/blue"
+    },
+    {
+      "tag": "createmetallurgy:light_bulb"
+    }
+  ],
+  "result": {
+    "id": "createmetallurgy:blue_light_bulb"
+  }
+}

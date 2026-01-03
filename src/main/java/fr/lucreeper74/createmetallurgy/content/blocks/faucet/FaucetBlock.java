@@ -54,12 +54,16 @@ public class FaucetBlock extends WrenchableDirectionalBlock implements IBE<Fauce
     }
 
     protected static void playSound(@Nullable Player pPlayer, Level pLevel, BlockPos pPos, boolean pIsOpened) {
-        pLevel.playSound(pPlayer, pPos, pIsOpened ? BlockSetType.IRON.trapdoorOpen() : BlockSetType.IRON.trapdoorClose(), SoundSource.BLOCKS, 1.0F, pLevel.getRandom().nextFloat() * 0.1F + 0.9F);
+        pLevel.playSound(pPlayer, pPos,
+                pIsOpened ? BlockSetType.IRON.trapdoorOpen() : BlockSetType.IRON.trapdoorClose(), SoundSource.BLOCKS,
+                1.0F, pLevel.getRandom().nextFloat() * 0.1F + 0.9F);
         pLevel.gameEvent(pPlayer, pIsOpened ? GameEvent.BLOCK_OPEN : GameEvent.BLOCK_CLOSE, pPos);
     }
 
-    @Override
-    public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hit) {
+    // Note: use() method was removed from Block in 1.21, but kept here for custom
+    // interaction handling
+    public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand,
+            BlockHitResult hit) {
         boolean currentState = state.getValue(OPEN);
         if (hand != InteractionHand.MAIN_HAND)
             return InteractionResult.PASS;
@@ -75,7 +79,8 @@ public class FaucetBlock extends WrenchableDirectionalBlock implements IBE<Fauce
     }
 
     @Override
-    public void neighborChanged(BlockState state, Level level, BlockPos pos, Block block, BlockPos neighborPos, boolean isMoving) {
+    public void neighborChanged(BlockState state, Level level, BlockPos pos, Block block, BlockPos neighborPos,
+            boolean isMoving) {
         if (!level.isClientSide())
             withBlockEntityDo(level, pos, be -> be.neighborChanged(neighborPos));
 
@@ -94,7 +99,6 @@ public class FaucetBlock extends WrenchableDirectionalBlock implements IBE<Fauce
         builder.add(OPEN, POWERED);
         super.createBlockStateDefinition(builder);
     }
-
 
     @Override
     public Class<FaucetBlockEntity> getBlockEntityClass() {

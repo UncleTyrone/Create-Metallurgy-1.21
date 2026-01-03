@@ -1,0 +1,14 @@
+{
+  "id": "createmetallurgy:crafting/materials/obdurium_ingot_from_block",
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "createmetallurgy:obdurium_block"
+    }
+  ],
+  "result": {
+    "count": 9,
+    "id": "createmetallurgy:obdurium_ingot"
+  }
+}

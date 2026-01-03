@@ -1,32 +1,25 @@
 package fr.lucreeper74.createmetallurgy.content.entities.ladle;
 
-import net.minecraft.core.Direction;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.common.capabilities.Capability;
-import net.minecraftforge.common.capabilities.ForgeCapabilities;
-import net.minecraftforge.common.capabilities.ICapabilityProvider;
-import net.minecraftforge.common.util.LazyOptional;
-import net.minecraftforge.fluids.FluidStack;
-import net.minecraftforge.fluids.capability.IFluidHandlerItem;
-import net.minecraftforge.fluids.capability.templates.FluidTank;
+import net.neoforged.neoforge.fluids.FluidStack;
+import net.neoforged.neoforge.fluids.capability.IFluidHandlerItem;
+import net.neoforged.neoforge.fluids.capability.templates.FluidTank;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class LadleFluidHandler implements IFluidHandlerItem, ICapabilityProvider {
+public class LadleFluidHandler implements IFluidHandlerItem {
     public static final int LADLE_CAPACITY = 9000; // in mb
-
-    private final LazyOptional<IFluidHandlerItem> holder = LazyOptional.of(() -> this);
 
     @NotNull
     protected ItemStack container;
 
-    public LadleFluidHandler(@NotNull ItemStack container) {
-        this.container = container;
-    }
+    @Nullable
+    protected HolderLookup.Provider registries;
 
-    @Override
-    public @NotNull <T> LazyOptional<T> getCapability(@NotNull Capability<T> cap, @Nullable Direction side) {
-        return ForgeCapabilities.FLUID_HANDLER_ITEM.orEmpty(cap, holder);
+    public LadleFluidHandler(@NotNull ItemStack container, @Nullable HolderLookup.Provider registries) {
+        this.container = container;
+        this.registries = registries;
     }
 
     @Override
@@ -41,14 +34,14 @@ public class LadleFluidHandler implements IFluidHandlerItem, ICapabilityProvider
 
     @NotNull
     public FluidStack getFluid() {
-        return LadleItem.getFluidContents(container).getFluid();
+        return LadleItem.getFluidContents(container, registries).getFluid();
     }
 
     protected void setFluid(FluidStack fluid) {
         FluidTank tank = new FluidTank(LADLE_CAPACITY);
         tank.setFluid(fluid);
 
-        LadleItem.setFluidContents(container, tank);
+        LadleItem.setFluidContents(container, tank, registries);
     }
 
     @Override
@@ -79,16 +72,16 @@ public class LadleFluidHandler implements IFluidHandlerItem, ICapabilityProvider
         if (action.simulate()) {
             if (fluid.isEmpty())
                 return Math.min(getTankCapacity(0), resource.getAmount());
-            if (!fluid.isFluidEqual(resource))
+            if (!FluidStack.isSameFluidSameComponents(fluid, resource))
                 return 0;
             return Math.min(getTankCapacity(0) - fluid.getAmount(), resource.getAmount());
         }
         if (fluid.isEmpty()) {
-            fluid = new FluidStack(resource, Math.min(getTankCapacity(0), resource.getAmount()));
+            fluid = resource.copyWithAmount(Math.min(getTankCapacity(0), resource.getAmount()));
             onContentsChanged(fluid);
             return fluid.getAmount();
         }
-        if (!fluid.isFluidEqual(resource))
+        if (!FluidStack.isSameFluidSameComponents(fluid, resource))
             return 0;
         int filled = getTankCapacity(0) - fluid.getAmount();
 
@@ -105,7 +98,7 @@ public class LadleFluidHandler implements IFluidHandlerItem, ICapabilityProvider
     @Override
     public @NotNull FluidStack drain(FluidStack resource, FluidAction action) {
         FluidStack fluid = getFluid();
-        if (resource.isEmpty() || !resource.isFluidEqual(fluid)) {
+        if (resource.isEmpty() || !FluidStack.isSameFluidSameComponents(resource, fluid)) {
             return FluidStack.EMPTY;
         }
         return drain(resource.getAmount(), action);
@@ -118,7 +111,7 @@ public class LadleFluidHandler implements IFluidHandlerItem, ICapabilityProvider
         if (fluid.getAmount() < drained) {
             drained = fluid.getAmount();
         }
-        FluidStack stack = new FluidStack(fluid, drained);
+        FluidStack stack = fluid.copyWithAmount(drained);
         if (action.execute() && drained > 0) {
             fluid.shrink(drained);
             onContentsChanged(fluid);

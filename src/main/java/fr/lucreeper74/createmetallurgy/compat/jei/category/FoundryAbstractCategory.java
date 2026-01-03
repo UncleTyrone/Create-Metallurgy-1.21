@@ -4,7 +4,7 @@ import com.simibubi.create.compat.jei.category.CreateRecipeCategory;
 import com.simibubi.create.compat.jei.category.animations.AnimatedBlazeBurner;
 import com.simibubi.create.content.processing.recipe.HeatCondition;
 import com.simibubi.create.content.processing.recipe.ProcessingOutput;
-import com.simibubi.create.foundation.fluid.FluidIngredient;
+import net.neoforged.neoforge.fluids.crafting.SizedFluidIngredient;
 import com.simibubi.create.foundation.gui.AllGuiTextures;
 import com.simibubi.create.foundation.item.ItemHelper;
 import fr.lucreeper74.createmetallurgy.content.blocks.industrial_crucible.FoundryData;
@@ -23,7 +23,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.util.Mth;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Ingredient;
-import net.minecraftforge.fluids.FluidStack;
+import net.neoforged.neoforge.fluids.FluidStack;
 import org.apache.commons.lang3.mutable.MutableInt;
 import org.jetbrains.annotations.NotNull;
 
@@ -39,7 +39,8 @@ public abstract class FoundryAbstractCategory<T extends FoundryRecipe> extends C
 
     @Override
     public void setRecipe(IRecipeLayoutBuilder builder, T recipe, IFocusGroup focuses) {
-        List<Pair<Ingredient, MutableInt>> condensedIngredients = ItemHelper.condenseIngredients(recipe.getIngredients());
+        List<Pair<Ingredient, MutableInt>> condensedIngredients = ItemHelper
+                .condenseIngredients(recipe.getIngredients());
 
         int size = condensedIngredients.size() + recipe.getFluidIngredients().size();
         int xOffset = size < 3 ? (3 - size) * 19 / 2 : 0;
@@ -59,7 +60,7 @@ public abstract class FoundryAbstractCategory<T extends FoundryRecipe> extends C
                     .addItemStacks(stacks);
             i++;
         }
-        for (FluidIngredient fluidIngredient : recipe.getFluidIngredients()) {
+        for (SizedFluidIngredient fluidIngredient : recipe.getFluidIngredients()) {
             int x = 8 + xOffset + (i % 3) * 19;
             int y = 56 - (i / 3) * 19;
             addFluidSlot(builder, x, y, fluidIngredient);
@@ -95,7 +96,8 @@ public abstract class FoundryAbstractCategory<T extends FoundryRecipe> extends C
         boolean noHeating = minHeat < 0;
         int minFoundryWidth = Mth.ceil(Mth.sqrt(Mth.clamp((minHeat / 2), 1, 25)));
 
-        FoundryData.FoundryHeatLevel minHeatLevel = FoundryData.FoundryHeatLevel.getHeatLevel(minHeat, minFoundryWidth * minFoundryWidth);
+        FoundryData.FoundryHeatLevel minHeatLevel = FoundryData.FoundryHeatLevel.getHeatLevel(minHeat,
+                minFoundryWidth * minFoundryWidth);
 
         int vRows = (1 + recipe.getFluidResults().size() + recipe.getRollableResults().size()) / 2;
         if (vRows <= 2)
@@ -105,7 +107,6 @@ public abstract class FoundryAbstractCategory<T extends FoundryRecipe> extends C
         shadow.render(graphics, 81, 58 + (noHeating ? 10 : 30));
         AllGuiTextures heatBar = noHeating ? AllGuiTextures.JEI_NO_HEAT_BAR : AllGuiTextures.JEI_HEAT_BAR;
         heatBar.render(graphics, 4, 80);
-
 
         Font font = Minecraft.getInstance().font;
         graphics.drawString(font, CMLang.translateDirect("foundry." + CMLang.asId(minHeatLevel.name())), 9,
@@ -133,7 +134,8 @@ public abstract class FoundryAbstractCategory<T extends FoundryRecipe> extends C
         int duration = recipe.getProcessingDuration();
 
         if (duration > 0) {
-            Component timeString = Component.translatable("gui.jei.category.smelting.time.seconds", duration / 20f).withStyle(ChatFormatting.GRAY);
+            Component timeString = Component.translatable("gui.jei.category.smelting.time.seconds", duration / 20f)
+                    .withStyle(ChatFormatting.GRAY);
             Font font = Minecraft.getInstance().font;
             int stringWidth = font.width(timeString) + 5;
             graphics.drawString(font, timeString, 55 - stringWidth, y, 0xffffff, false);
@@ -141,7 +143,8 @@ public abstract class FoundryAbstractCategory<T extends FoundryRecipe> extends C
     }
 
     @Override
-    public @NotNull List<Component> getTooltipStrings(T recipe, IRecipeSlotsView recipeSlotsView, double mouseX, double mouseY) {
+    public @NotNull List<Component> getTooltipStrings(T recipe, IRecipeSlotsView recipeSlotsView, double mouseX,
+            double mouseY) {
         List<Component> tooltip = new ArrayList<>();
 
         int minXSize = 142;
@@ -153,7 +156,7 @@ public abstract class FoundryAbstractCategory<T extends FoundryRecipe> extends C
             tooltip.add(CMLang.translateDirect("recipe.foundry.min_size.text").withStyle(ChatFormatting.RED));
 
         int minXBurner = 5;
-        int maxXBurner = minXBurner + 120 ;
+        int maxXBurner = minXBurner + 120;
         int minYBurner = 82;
         int maxYBurner = minYBurner + 18;
 
@@ -167,8 +170,7 @@ public abstract class FoundryAbstractCategory<T extends FoundryRecipe> extends C
                             .space()
                             .translate("generic.unit.thermal")
                             .style(ChatFormatting.RED)
-                            .component()
-            );
+                            .component());
 
             tooltip.add(
                     CMLang.translate("generic.icon.up")
@@ -177,8 +179,7 @@ public abstract class FoundryAbstractCategory<T extends FoundryRecipe> extends C
                             .space()
                             .translate("generic.unit.thermal")
                             .style(ChatFormatting.GREEN)
-                            .component()
-            );
+                            .component());
         }
 
         return tooltip;

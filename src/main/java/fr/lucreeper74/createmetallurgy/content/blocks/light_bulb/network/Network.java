@@ -32,13 +32,12 @@ public class Network {
                 continue;
             }
 
-//            if (!withinRange(actor, other))
-//                continue;
+            // if (!withinRange(actor, other))
+            // continue;
 
             if (power < 15)
                 power = Math.max(other.getTransmittedSignal(), power);
         }
-
 
         for (INetworkNode node : nodes) {
             node.setReceivedSignal(power);

@@ -1,17 +1,15 @@
 package fr.lucreeper74.createmetallurgy.content.blocks.industrial_crucible.foundry.recipes;
 
-import com.google.gson.JsonObject;
-import com.simibubi.create.content.processing.recipe.ProcessingRecipeBuilder;
+import com.simibubi.create.content.processing.recipe.ProcessingRecipeParams;
 import fr.lucreeper74.createmetallurgy.content.blocks.industrial_crucible.CrucibleBlockEntity;
 import fr.lucreeper74.createmetallurgy.registries.CMRecipeTypes;
-import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.entity.EntityType;
 
 public class EntityMeltingRecipe extends FoundryRecipe {
 
     protected EntityIngredient entityIngredient;
 
-    public EntityMeltingRecipe(ProcessingRecipeBuilder.ProcessingRecipeParams params) {
+    public EntityMeltingRecipe(ProcessingRecipeParams params) {
         super(CMRecipeTypes.ENTITY_MELTING, params);
         this.entityIngredient = EntityIngredient.EMPTY;
     }
@@ -29,27 +27,8 @@ public class EntityMeltingRecipe extends FoundryRecipe {
         return entityIngredient;
     }
 
-    @Override
-    public void readAdditional(JsonObject json) {
-        super.readAdditional(json);
-        entityIngredient = EntityIngredient.deserialize(json.getAsJsonObject("entity"));
-    }
-
-    @Override
-    public void writeAdditional(JsonObject json) {
-        super.writeAdditional(json);
-        json.add("entity", entityIngredient.serialize());
-    }
-
-    @Override
-    public void readAdditional(FriendlyByteBuf buffer) {
-        super.readAdditional(buffer);
-        entityIngredient = EntityIngredient.read(buffer);
-    }
-
-    @Override
-    public void writeAdditional(FriendlyByteBuf buffer) {
-        super.writeAdditional(buffer);
-        entityIngredient.write(buffer);
+    public EntityMeltingRecipe withEntityIngredient(EntityIngredient ingredient) {
+        this.entityIngredient = ingredient;
+        return this;
     }
 }

@@ -1,0 +1,26 @@
+{
+  "id": "createmetallurgy:melting/tin/ingot",
+  "type": "createmetallurgy:melting",
+  "conditions": [
+    {
+      "type": "neoforge:not",
+      "value": {
+        "type": "neoforge:tag_empty",
+        "tag": "c:ingots/tin"
+      }
+    }
+  ],
+  "heatRequirement": "heated",
+  "ingredients": [
+    {
+      "tag": "c:ingots/tin"
+    }
+  ],
+  "processingTime": 40,
+  "results": [
+    {
+      "amount": 90,
+      "fluid": "createmetallurgy:molten_tin"
+    }
+  ]
+}

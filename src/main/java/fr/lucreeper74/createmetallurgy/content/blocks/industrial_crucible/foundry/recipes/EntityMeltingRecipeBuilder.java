@@ -8,7 +8,7 @@ public class EntityMeltingRecipeBuilder extends FoundryRecipeBuilder<EntityMelti
 
     protected EntityIngredient entityIngredient;
 
-    public EntityMeltingRecipeBuilder(ProcessingRecipeFactory<EntityMeltingRecipe> factory, ResourceLocation recipeId) {
+    public EntityMeltingRecipeBuilder(Object factory, ResourceLocation recipeId) {
         super(factory, recipeId);
     }
 

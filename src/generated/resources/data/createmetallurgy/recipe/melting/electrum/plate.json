@@ -1,0 +1,26 @@
+{
+  "id": "createmetallurgy:melting/electrum/plate",
+  "type": "createmetallurgy:melting",
+  "conditions": [
+    {
+      "type": "neoforge:not",
+      "value": {
+        "type": "neoforge:tag_empty",
+        "tag": "c:plates/electrum"
+      }
+    }
+  ],
+  "heatRequirement": "heated",
+  "ingredients": [
+    {
+      "tag": "c:plates/electrum"
+    }
+  ],
+  "processingTime": 40,
+  "results": [
+    {
+      "amount": 90,
+      "fluid": "createmetallurgy:molten_electrum"
+    }
+  ]
+}

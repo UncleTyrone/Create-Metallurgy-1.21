@@ -1,0 +1,15 @@
+{
+  "id": "createmetallurgy:casting_in_basin/brass/block",
+  "type": "createmetallurgy:casting_in_basin",
+  "ingredients": [
+    {
+      "amount": 810,
+      "fluid": "createmetallurgy:molten_brass",
+      "nbt": {}
+    }
+  ],
+  "processingTime": 480,
+  "result": {
+    "id": "create:brass_block"
+  }
+}

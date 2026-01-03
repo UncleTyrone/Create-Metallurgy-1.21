@@ -12,10 +12,10 @@ import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.FluidState;
-import net.minecraftforge.fluids.ForgeFlowingFluid;
+import net.neoforged.neoforge.fluids.BaseFlowingFluid;
 
-public class MoltenFluidSource extends ForgeFlowingFluid.Source {
-    public MoltenFluidSource(Properties properties) {
+public class MoltenFluidSource extends BaseFlowingFluid.Source {
+    public MoltenFluidSource(BaseFlowingFluid.Properties properties) {
         super(properties);
     }
 
@@ -30,11 +30,14 @@ public class MoltenFluidSource extends ForgeFlowingFluid.Source {
                 double d1 = (double) pPos.getY() + (double) 1.0F;
                 double d2 = (double) pPos.getZ() + pRandom.nextDouble();
                 pLevel.addParticle(ParticleTypes.LAVA, d0, d1, d2, 0.0F, 0.0F, 0.0F);
-                pLevel.playLocalSound(d0, d1, d2, SoundEvents.LAVA_POP, SoundSource.BLOCKS, 0.2F + pRandom.nextFloat() * 0.2F, 0.9F + pRandom.nextFloat() * 0.15F, false);
+                pLevel.playLocalSound(d0, d1, d2, SoundEvents.LAVA_POP, SoundSource.BLOCKS,
+                        0.2F + pRandom.nextFloat() * 0.2F, 0.9F + pRandom.nextFloat() * 0.15F, false);
             }
 
             if (pRandom.nextInt(200) == 0) {
-                pLevel.playLocalSound(pPos.getX(), pPos.getY(), pPos.getZ(), SoundEvents.LAVA_AMBIENT, SoundSource.BLOCKS, 0.2F + pRandom.nextFloat() * 0.2F, 0.9F + pRandom.nextFloat() * 0.15F, false);
+                pLevel.playLocalSound(pPos.getX(), pPos.getY(), pPos.getZ(), SoundEvents.LAVA_AMBIENT,
+                        SoundSource.BLOCKS, 0.2F + pRandom.nextFloat() * 0.2F, 0.9F + pRandom.nextFloat() * 0.15F,
+                        false);
             }
         }
     }
@@ -55,10 +58,11 @@ public class MoltenFluidSource extends ForgeFlowingFluid.Source {
                     BlockState blockstate = pLevel.getBlockState(blockpos);
                     if (blockstate.isAir()) {
                         if (this.hasFlammableNeighbours(pLevel, blockpos)) {
-                            pLevel.setBlockAndUpdate(blockpos, net.minecraftforge.event.ForgeEventFactory.fireFluidPlaceBlockEvent(pLevel, blockpos, pPos, Blocks.FIRE.defaultBlockState()));
+                            pLevel.setBlockAndUpdate(blockpos, net.neoforged.neoforge.event.EventHooks
+                                    .fireFluidPlaceBlockEvent(pLevel, blockpos, pPos, Blocks.FIRE.defaultBlockState()));
                             return;
                         }
-                    } else if (blockstate.blocksMotion()) {
+                    } else if (!blockstate.getCollisionShape(pLevel, blockpos).isEmpty()) {
                         return;
                     }
                 }
@@ -70,7 +74,9 @@ public class MoltenFluidSource extends ForgeFlowingFluid.Source {
                     }
 
                     if (pLevel.isEmptyBlock(blockpos1.above()) && this.isFlammable(pLevel, blockpos1, Direction.UP)) {
-                        pLevel.setBlockAndUpdate(blockpos1.above(), net.minecraftforge.event.ForgeEventFactory.fireFluidPlaceBlockEvent(pLevel, blockpos1.above(), pPos, Blocks.FIRE.defaultBlockState()));
+                        pLevel.setBlockAndUpdate(blockpos1.above(),
+                                net.neoforged.neoforge.event.EventHooks.fireFluidPlaceBlockEvent(pLevel,
+                                        blockpos1.above(), pPos, Blocks.FIRE.defaultBlockState()));
                     }
                 }
             }
@@ -89,7 +95,9 @@ public class MoltenFluidSource extends ForgeFlowingFluid.Source {
     }
 
     private boolean isFlammable(LevelReader level, BlockPos pos, Direction face) {
-        return (pos.getY() < level.getMinBuildHeight() || pos.getY() >= level.getMaxBuildHeight() || level.hasChunkAt(pos)) && level.getBlockState(pos).isFlammable(level, pos, face);
+        return (pos.getY() < level.getMinBuildHeight() || pos.getY() >= level.getMaxBuildHeight()
+                || level.getChunkForCollisions(pos.getX() >> 4, pos.getZ() >> 4) != null)
+                && level.getBlockState(pos).isFlammable(level, pos, face);
     }
 
     protected boolean isRandomlyTicking() {

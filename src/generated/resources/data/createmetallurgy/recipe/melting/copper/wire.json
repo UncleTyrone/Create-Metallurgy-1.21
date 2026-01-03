@@ -1,0 +1,26 @@
+{
+  "id": "createmetallurgy:melting/copper/wire",
+  "type": "createmetallurgy:melting",
+  "conditions": [
+    {
+      "type": "neoforge:not",
+      "value": {
+        "type": "neoforge:tag_empty",
+        "tag": "c:wires/copper"
+      }
+    }
+  ],
+  "heatRequirement": "heated",
+  "ingredients": [
+    {
+      "tag": "c:wires/copper"
+    }
+  ],
+  "processingTime": 16,
+  "results": [
+    {
+      "amount": 45,
+      "fluid": "createmetallurgy:molten_copper"
+    }
+  ]
+}

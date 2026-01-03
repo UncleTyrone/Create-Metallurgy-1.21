@@ -1,0 +1,26 @@
+{
+  "id": "createmetallurgy:melting/silver/ingot",
+  "type": "createmetallurgy:melting",
+  "conditions": [
+    {
+      "type": "neoforge:not",
+      "value": {
+        "type": "neoforge:tag_empty",
+        "tag": "c:ingots/silver"
+      }
+    }
+  ],
+  "heatRequirement": "heated",
+  "ingredients": [
+    {
+      "tag": "c:ingots/silver"
+    }
+  ],
+  "processingTime": 40,
+  "results": [
+    {
+      "amount": 90,
+      "fluid": "createmetallurgy:molten_silver"
+    }
+  ]
+}

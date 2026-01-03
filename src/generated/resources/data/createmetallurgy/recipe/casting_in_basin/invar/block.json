@@ -1,0 +1,24 @@
+{
+  "id": "createmetallurgy:casting_in_basin/invar/block",
+  "type": "createmetallurgy:casting_in_basin",
+  "conditions": [
+    {
+      "type": "neoforge:not",
+      "value": {
+        "type": "neoforge:tag_empty",
+        "tag": "c:storage_blocks/invar"
+      }
+    }
+  ],
+  "ingredients": [
+    {
+      "amount": 810,
+      "fluid": "createmetallurgy:molten_invar",
+      "nbt": {}
+    }
+  ],
+  "processingTime": 480,
+  "result": {
+    "tag": "c:storage_blocks/invar"
+  }
+}

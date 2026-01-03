@@ -9,6 +9,7 @@ import com.simibubi.create.foundation.blockEntity.behaviour.*;
 import fr.lucreeper74.createmetallurgy.content.blocks.light_bulb.network.NetworkHandler;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -28,7 +29,6 @@ public class NetworkAddressBehaviour extends BlockEntityBehaviour implements INe
     private IntSupplier transmission;
     private IntConsumer signalCallback;
 
-
     public NetworkAddressBehaviour(SmartBlockEntity be, ValueBoxTransform AddressSlot) {
         super(be);
         address = Address.EMPTY;
@@ -36,7 +36,7 @@ public class NetworkAddressBehaviour extends BlockEntityBehaviour implements INe
     }
 
     public static NetworkAddressBehaviour networkNode(SmartBlockEntity be, ValueBoxTransform slot,
-                                         IntConsumer signalCallback, IntSupplier transmission) {
+            IntConsumer signalCallback, IntSupplier transmission) {
         NetworkAddressBehaviour behaviour = new NetworkAddressBehaviour(be, slot);
         behaviour.signalCallback = signalCallback;
         behaviour.transmission = transmission;
@@ -59,7 +59,8 @@ public class NetworkAddressBehaviour extends BlockEntityBehaviour implements INe
 
         if (changed) {
             getHandler().getNetOf(getWorld(), this).removeNode(this);
-        } else return;
+        } else
+            return;
 
         address = Address.of(stack);
         blockEntity.sendData();
@@ -74,7 +75,6 @@ public class NetworkAddressBehaviour extends BlockEntityBehaviour implements INe
             return;
         getHandler().getNetOf(getWorld(), this).removeNode(this);
     }
-
 
     public void notifySignalChange() {
         CreateMetallurgy.NETWORK_HANDLER.getNetOf(getWorld(), this).transmit(this);
@@ -113,16 +113,16 @@ public class NetworkAddressBehaviour extends BlockEntityBehaviour implements INe
     }
 
     @Override
-    public void write(CompoundTag nbt, boolean clientPacket) {
-        super.write(nbt, clientPacket);
+    public void write(CompoundTag nbt, HolderLookup.Provider registries, boolean clientPacket) {
+        super.write(nbt, registries, clientPacket);
         nbt.put("Address", address.getStack()
-                .save(new CompoundTag()));
+                .saveOptional(registries));
     }
 
     @Override
-    public void read(CompoundTag nbt, boolean clientPacket) {
-        super.read(nbt, clientPacket);
-        address = Address.of(ItemStack.of(nbt.getCompound("Address")));
+    public void read(CompoundTag nbt, HolderLookup.Provider registries, boolean clientPacket) {
+        super.read(nbt, registries, clientPacket);
+        address = Address.of(ItemStack.parseOptional(registries, nbt.getCompound("Address")));
     }
 
     @Override
@@ -151,18 +151,19 @@ public class NetworkAddressBehaviour extends BlockEntityBehaviour implements INe
     }
 
     @Override
-    public boolean writeToClipboard(CompoundTag tag, Direction side) {
-        tag.put("AddressClip", address.getStack().save(new CompoundTag()));
+    public boolean writeToClipboard(HolderLookup.Provider registries, CompoundTag tag, Direction side) {
+        tag.put("AddressClip", address.getStack().saveOptional(registries));
         return true;
     }
 
     @Override
-    public boolean readFromClipboard(CompoundTag tag, Player player, Direction side, boolean simulate) {
+    public boolean readFromClipboard(HolderLookup.Provider registries, CompoundTag tag, Player player, Direction side,
+            boolean simulate) {
         if (!tag.contains("AddressClip"))
             return false;
         if (simulate)
             return true;
-        setAddress(ItemStack.of(tag.getCompound("AddressClip")));
+        setAddress(ItemStack.parseOptional(registries, tag.getCompound("AddressClip")));
         return true;
     }
 }

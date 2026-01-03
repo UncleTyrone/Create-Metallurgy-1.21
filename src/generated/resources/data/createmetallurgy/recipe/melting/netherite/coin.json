@@ -1,0 +1,26 @@
+{
+  "id": "createmetallurgy:melting/netherite/coin",
+  "type": "createmetallurgy:melting",
+  "conditions": [
+    {
+      "type": "neoforge:not",
+      "value": {
+        "type": "neoforge:tag_empty",
+        "tag": "c:coins/netherite"
+      }
+    }
+  ],
+  "heatRequirement": "superheated",
+  "ingredients": [
+    {
+      "tag": "c:coins/netherite"
+    }
+  ],
+  "processingTime": 4,
+  "results": [
+    {
+      "amount": 10,
+      "fluid": "createmetallurgy:molten_netherite"
+    }
+  ]
+}

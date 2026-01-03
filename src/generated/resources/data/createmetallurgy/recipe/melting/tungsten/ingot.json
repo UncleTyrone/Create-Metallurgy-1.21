@@ -1,0 +1,26 @@
+{
+  "id": "createmetallurgy:melting/tungsten/ingot",
+  "type": "createmetallurgy:melting",
+  "conditions": [
+    {
+      "type": "neoforge:not",
+      "value": {
+        "type": "neoforge:tag_empty",
+        "tag": "c:ingots/tungsten"
+      }
+    }
+  ],
+  "heatRequirement": "superheated",
+  "ingredients": [
+    {
+      "tag": "c:ingots/tungsten"
+    }
+  ],
+  "processingTime": 40,
+  "results": [
+    {
+      "amount": 90,
+      "fluid": "createmetallurgy:molten_tungsten"
+    }
+  ]
+}

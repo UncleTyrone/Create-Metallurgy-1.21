@@ -1,0 +1,20 @@
+{
+  "id": "createmetallurgy:crafting/content/foundry_unit",
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "C": {
+      "item": "minecraft:compass"
+    },
+    "S": {
+      "tag": "c:ingots/steel"
+    }
+  },
+  "pattern": [
+    "SCS"
+  ],
+  "result": {
+    "id": "createmetallurgy:foundry_unit"
+  },
+  "show_notification": true
+}

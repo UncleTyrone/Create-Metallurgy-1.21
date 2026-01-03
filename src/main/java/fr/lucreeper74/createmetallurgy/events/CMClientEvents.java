@@ -1,17 +1,18 @@
 package fr.lucreeper74.createmetallurgy.events;
 
+import fr.lucreeper74.createmetallurgy.CreateMetallurgy;
 import fr.lucreeper74.createmetallurgy.content.blocks.light_bulb.network.address.NetworkAddressRenderer;
 import net.minecraft.client.Minecraft;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.client.event.ClientTickEvent;
 
-@Mod.EventBusSubscriber(Dist.CLIENT)
+@EventBusSubscriber(modid = CreateMetallurgy.MOD_ID, value = Dist.CLIENT)
 public class CMClientEvents {
 
     @SubscribeEvent
-    public static void onTick(TickEvent.ClientTickEvent event) {
+    public static void onTick(ClientTickEvent.Post event) {
         if (!isGameActive())
             return;
 

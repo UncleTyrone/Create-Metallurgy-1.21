@@ -1,0 +1,30 @@
+{
+  "id": "createmetallurgy:melting/obdurium/dirty_dust",
+  "type": "createmetallurgy:melting",
+  "conditions": [
+    {
+      "type": "neoforge:not",
+      "value": {
+        "type": "neoforge:tag_empty",
+        "tag": "c:dirty_dusts/obdurium"
+      }
+    }
+  ],
+  "heatRequirement": "superheated",
+  "ingredients": [
+    {
+      "tag": "c:dirty_dusts/obdurium"
+    }
+  ],
+  "processingTime": 30,
+  "results": [
+    {
+      "amount": 90,
+      "fluid": "createmetallurgy:molten_obdurium"
+    },
+    {
+      "amount": 30,
+      "fluid": "createmetallurgy:molten_slag"
+    }
+  ]
+}

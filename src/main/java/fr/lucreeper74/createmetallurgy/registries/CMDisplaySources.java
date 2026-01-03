@@ -10,13 +10,13 @@ import static fr.lucreeper74.createmetallurgy.CreateMetallurgy.REGISTRATE;
 
 public class CMDisplaySources {
 
-    public static final RegistryEntry<FoundryDisplaySource> FOUNDRY_STATUS = simple("foundry_status", FoundryDisplaySource::new);
+    public static final RegistryEntry<DisplaySource, FoundryDisplaySource> FOUNDRY_STATUS = simple("foundry_status",
+            FoundryDisplaySource::new);
 
-    //
-
-    private static <T extends DisplaySource> RegistryEntry<T> simple(String name, Supplier<T> supplier) {
-        return REGISTRATE.displaySource(name, supplier).register();
+    private static <T extends DisplaySource> RegistryEntry<DisplaySource, T> simple(String name, Supplier<T> supplier) {
+        return (RegistryEntry<DisplaySource, T>) REGISTRATE.displaySource(name, supplier).register();
     }
 
-    public static void register() {}
+    public static void register() {
+    }
 }

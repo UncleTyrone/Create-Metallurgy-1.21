@@ -1,0 +1,27 @@
+{
+  "id": "createmetallurgy:bulk_melting/copper/block",
+  "type": "createmetallurgy:bulk_melting",
+  "conditions": [
+    {
+      "type": "neoforge:not",
+      "value": {
+        "type": "neoforge:tag_empty",
+        "tag": "c:storage_blocks/copper"
+      }
+    }
+  ],
+  "ingredients": [
+    {
+      "tag": "c:storage_blocks/copper"
+    }
+  ],
+  "maxHeatRequirement": 50,
+  "minHeatRequirement": 5,
+  "processingTime": 224,
+  "results": [
+    {
+      "amount": 810,
+      "fluid": "createmetallurgy:molten_copper"
+    }
+  ]
+}

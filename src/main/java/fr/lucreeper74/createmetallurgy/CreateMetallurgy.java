@@ -1,8 +1,6 @@
 package fr.lucreeper74.createmetallurgy;
 
 import com.mojang.logging.LogUtils;
-import com.simibubi.create.AllFluids;
-import com.simibubi.create.foundation.CreateNBTProcessors;
 import com.simibubi.create.foundation.data.CreateRegistrate;
 import com.simibubi.create.foundation.item.ItemDescription;
 import com.simibubi.create.foundation.item.KineticStats;
@@ -13,15 +11,14 @@ import fr.lucreeper74.createmetallurgy.data.CMDatagen;
 import fr.lucreeper74.createmetallurgy.registries.*;
 import net.createmod.catnip.lang.FontHelper;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.eventbus.api.EventPriority;
-import net.minecraftforge.eventbus.api.IEventBus;
-import net.minecraftforge.fml.DistExecutor;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
-import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
-import net.minecraftforge.registries.RegisterEvent;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.bus.api.EventPriority;
+import net.neoforged.bus.api.IEventBus;
+import net.neoforged.fml.ModContainer;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
+import net.neoforged.fml.loading.FMLEnvironment;
+import net.neoforged.neoforge.registries.RegisterEvent;
 import org.slf4j.Logger;
 
 @Mod(CreateMetallurgy.MOD_ID)
@@ -31,22 +28,25 @@ public class CreateMetallurgy {
 
     public static final CreateRegistrate REGISTRATE = CreateRegistrate.create(MOD_ID);
     public static final Logger LOGGER = LogUtils.getLogger();
-    static {
-        REGISTRATE.setTooltipModifierFactory(item -> new ItemDescription.Modifier(item, FontHelper.Palette.STANDARD_CREATE)
-                .andThen(TooltipModifier.mapNull(KineticStats.create(item))));
-    }
-
-    //HANDLERS
     public static final NetworkHandler NETWORK_HANDLER = new NetworkHandler();
 
-    public CreateMetallurgy() {
-        IEventBus eventBus = FMLJavaModLoadingContext.get().getModEventBus();
-        REGISTRATE.registerEventListeners(eventBus);
+    static {
+        REGISTRATE.setTooltipModifierFactory(
+                item -> new ItemDescription.Modifier(item, FontHelper.Palette.STANDARD_CREATE)
+                        .andThen(TooltipModifier.mapNull(KineticStats.create(item))));
+        // Explicitly set creative tab to null to prevent Registrate from automatically
+        // adding items to tabs. We use a custom DisplayItemsGenerator instead.
+        REGISTRATE.setCreativeTab(null);
+    }
 
-        DistExecutor.unsafeRunWhenOn(Dist.CLIENT,
-                () -> CMPartialModels::init); // Causing crash with ModernFix if Client init
+    public CreateMetallurgy(IEventBus modEventBus, ModContainer modContainer) {
+        REGISTRATE.registerEventListeners(modEventBus);
 
-        CMCreativeTabs.register(eventBus);
+        if (FMLEnvironment.dist == Dist.CLIENT) {
+            CMPartialModels.init();
+        }
+
+        CMCreativeTabs.register(modEventBus);
         CMDisplaySources.register();
         CMBlocks.register();
         CMItems.register();
@@ -55,23 +55,20 @@ public class CreateMetallurgy {
         CMEntityTypes.register();
         CMSpriteShifts.init();
         CMBlockEntityTypes.register();
-        CMRecipeTypes.register(eventBus);
-        CMPackets.registerPackets();
+        CMRecipeTypes.register(modEventBus);
+        CMPackets.registerPackets(modEventBus);
 
-        DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> CreateMetallurgyClient.loadClient(eventBus));
+        if (FMLEnvironment.dist == Dist.CLIENT) {
+            CreateMetallurgyClient.loadClient(modEventBus);
+        }
 
-        eventBus.addListener(CreateMetallurgy::init);
-        eventBus.addListener(CreateMetallurgy::onRegister);
-        eventBus.addListener(CMEntityTypes::registerEntityAttributes);
-        eventBus.addListener(EventPriority.LOWEST, CMDatagen::gatherData);
-
-        MinecraftForge.EVENT_BUS.register(this);
+        modEventBus.addListener(CreateMetallurgy::init);
+        modEventBus.addListener(CreateMetallurgy::onRegister);
+        modEventBus.addListener(CMEntityTypes::registerEntityAttributes);
+        modEventBus.addListener(EventPriority.LOWEST, CMDatagen::gatherData);
     }
 
     public static void init(final FMLCommonSetupEvent event) {
-        AllFluids.registerFluidInteractions();
-        CreateNBTProcessors.register();
-
         event.enqueueWork(() -> {
             CastingWithSpout.registerDefaults();
         });
@@ -81,7 +78,13 @@ public class CreateMetallurgy {
         CMArmInteract.init();
     }
 
+    public static ResourceLocation asResource(String path) {
+        return ResourceLocation.fromNamespaceAndPath(MOD_ID, path);
+    }
+
+    // Keep deprecated method for compatibility during migration
+    @Deprecated
     public static ResourceLocation genRL(String path) {
-        return new ResourceLocation(MOD_ID, path);
+        return asResource(path);
     }
 }

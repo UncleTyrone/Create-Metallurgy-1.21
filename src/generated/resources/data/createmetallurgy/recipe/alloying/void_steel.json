@@ -1,0 +1,21 @@
+{
+  "id": "createmetallurgy:alloying/void_steel",
+  "type": "createmetallurgy:alloying",
+  "heatRequirement": "superheated",
+  "ingredients": [
+    {
+      "item": "minecraft:ender_pearl"
+    },
+    {
+      "amount": 90,
+      "fluid": "createmetallurgy:molten_netherite",
+      "nbt": {}
+    }
+  ],
+  "results": [
+    {
+      "amount": 90,
+      "fluid": "createmetallurgy:molten_void_steel"
+    }
+  ]
+}

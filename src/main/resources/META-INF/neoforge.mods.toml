@@ -1,0 +1,37 @@
+modLoader="javafml"
+loaderVersion="${loader_version_range}"
+license="${mod_license}"
+issueTrackerURL="https://github.com/Lucreeper74/Create-Metallurgy/issues"
+
+[[mods]]
+modId="${mod_id}"
+version="${mod_version}"
+displayName="${mod_name}"
+displayURL="https://www.curseforge.com/minecraft/mc-mods/create-simple-coins-renewed"
+logoFile="createmetallurgy.png"
+authors="${mod_authors}"
+description='''${mod_description}'''
+
+[[dependencies.${mod_id}]]
+    modId="neoforge"
+    type="required"
+    versionRange="${neo_version_range}"
+    ordering="NONE"
+    side="BOTH"
+
+[[dependencies.${mod_id}]]
+    modId="minecraft"
+    type="required"
+    versionRange="${minecraft_version_range}"
+    ordering="NONE"
+    side="BOTH"
+
+[[dependencies.${mod_id}]]
+    modId="create"
+    type="required"
+    versionRange="[6.0.8,6.1.0)"
+    ordering="AFTER"
+    side="BOTH"
+
+[[mixins]]
+    config="createmetallurgy.mixins.json"

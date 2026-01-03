@@ -6,6 +6,7 @@ import com.simibubi.create.foundation.utility.ResetableLazy;
 import fr.lucreeper74.createmetallurgy.content.blocks.light_bulb.network.address.NetworkAddressBehaviour;
 import net.createmod.catnip.animation.LerpedFloat;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.level.block.entity.BlockEntityType;
@@ -78,16 +79,16 @@ public class LightBulbBlockEntity extends SmartBlockEntity {
     }
 
     @Override
-    public void write(CompoundTag compound, boolean clientPacket) {
+    public void write(CompoundTag compound, HolderLookup.Provider registries, boolean clientPacket) {
         compound.putInt("Receive", getReceivedSignal());
         compound.putBoolean("ReceivedChanged", receivedSignalChanged);
         compound.putInt("Transmit", transmittedSignal);
-        super.write(compound, clientPacket);
+        super.write(compound, registries, clientPacket);
     }
 
     @Override
-    protected void read(CompoundTag compound, boolean clientPacket) {
-        super.read(compound, clientPacket);
+    protected void read(CompoundTag compound, HolderLookup.Provider registries, boolean clientPacket) {
+        super.read(compound, registries, clientPacket);
         receivedSignal = compound.getInt("Receive");
         receivedSignalChanged = compound.getBoolean("ReceivedChanged");
         if (level == null || level.isClientSide)
@@ -101,7 +102,7 @@ public class LightBulbBlockEntity extends SmartBlockEntity {
         BlockState blockState = getBlockState();
         int lightLevel = blockState.getValue(LightBulbBlock.LEVEL);
 
-        if(level.isClientSide) {
+        if (level.isClientSide) {
             glow.tickChaser();
             glow.chase(lightLevel, .2f, LerpedFloat.Chaser.EXP);
         }
@@ -122,6 +123,7 @@ public class LightBulbBlockEntity extends SmartBlockEntity {
     }
 
     @Override
+    @SuppressWarnings("deprecation")
     public void setBlockState(BlockState state) {
         super.setBlockState(state);
         colorProvider.reset();

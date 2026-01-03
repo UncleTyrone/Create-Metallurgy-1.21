@@ -1,0 +1,26 @@
+{
+  "id": "createmetallurgy:melting/tungsten/coin",
+  "type": "createmetallurgy:melting",
+  "conditions": [
+    {
+      "type": "neoforge:not",
+      "value": {
+        "type": "neoforge:tag_empty",
+        "tag": "c:coins/tungsten"
+      }
+    }
+  ],
+  "heatRequirement": "superheated",
+  "ingredients": [
+    {
+      "tag": "c:coins/tungsten"
+    }
+  ],
+  "processingTime": 4,
+  "results": [
+    {
+      "amount": 10,
+      "fluid": "createmetallurgy:molten_tungsten"
+    }
+  ]
+}

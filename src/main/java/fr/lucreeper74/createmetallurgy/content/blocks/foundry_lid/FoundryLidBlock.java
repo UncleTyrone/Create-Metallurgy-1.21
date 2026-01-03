@@ -1,6 +1,5 @@
 package fr.lucreeper74.createmetallurgy.content.blocks.foundry_lid;
 
-import com.simibubi.create.Create;
 import com.simibubi.create.content.equipment.wrench.IWrenchable;
 import com.simibubi.create.foundation.block.IBE;
 import fr.lucreeper74.createmetallurgy.content.blocks.foundry_basin.FoundryBasinBlockEntity;
@@ -30,7 +29,7 @@ import net.minecraft.world.level.gameevent.GameEvent;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
-import net.minecraftforge.items.ItemHandlerHelper;
+import net.neoforged.neoforge.items.ItemHandlerHelper;
 import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nullable;
@@ -83,7 +82,7 @@ public class FoundryLidBlock extends Block implements IBE<FoundryLidBlockEntity>
         return InteractionResult.SUCCESS;
     }
 
-    @Override
+    // Note: use() method may have been removed in 1.21
     public InteractionResult use(@NotNull BlockState state, Level level, BlockPos pos,
                                  Player player, InteractionHand hand, BlockHitResult hit) {
         boolean currentState = state.getValue(OPEN);
@@ -102,7 +101,7 @@ public class FoundryLidBlock extends Block implements IBE<FoundryLidBlockEntity>
                 ItemStack insertItem = ItemHandlerHelper.insertItem(basinBE.getInputInventory(), heldItem, false);
                 player.setItemInHand(hand, heldItem.split(insertItem.getCount()));
                 level.playSound(null, pos, SoundEvents.ITEM_FRAME_ADD_ITEM,
-                        SoundSource.PLAYERS, 1f, 1f + Create.RANDOM.nextFloat());
+                        SoundSource.PLAYERS, 1f, 1f + level.random.nextFloat());
                 return InteractionResult.SUCCESS;
             }
         }

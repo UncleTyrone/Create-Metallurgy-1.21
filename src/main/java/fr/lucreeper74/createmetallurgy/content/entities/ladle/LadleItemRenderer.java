@@ -5,17 +5,17 @@ import com.mojang.math.Axis;
 import com.simibubi.create.foundation.item.render.CustomRenderedItemModel;
 import com.simibubi.create.foundation.item.render.CustomRenderedItemModelRenderer;
 import com.simibubi.create.foundation.item.render.PartialItemModelRenderer;
-import net.createmod.catnip.platform.ForgeCatnipServices;
+import fr.lucreeper74.createmetallurgy.utils.ColoredFluidRenderer;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.fluids.FluidStack;
-import net.minecraftforge.fluids.FluidUtil;
-
-import java.util.Optional;
+import net.neoforged.neoforge.fluids.FluidStack;
+import net.neoforged.neoforge.fluids.capability.templates.FluidTank;
 
 public class LadleItemRenderer extends CustomRenderedItemModelRenderer {
-    public void render(ItemStack box, CustomRenderedItemModel model, PartialItemModelRenderer renderer, ItemDisplayContext displayContext, PoseStack ms, MultiBufferSource buffer, int light, int overlay) {
+    public void render(ItemStack box, CustomRenderedItemModel model, PartialItemModelRenderer renderer,
+            ItemDisplayContext displayContext, PoseStack ms, MultiBufferSource buffer, int light, int overlay) {
         renderer.render(model.getOriginalModel(), light);
         ms.pushPose();
         ms.translate(0f, -8 / 16f, 0f); // Avoid to have the fluid way to high in air ??
@@ -23,12 +23,19 @@ public class LadleItemRenderer extends CustomRenderedItemModelRenderer {
         ms.popPose();
     }
 
-    public static void renderFluidContents(ItemStack box, float yaw, PoseStack ms, MultiBufferSource buffer, int light) {
-        Optional<FluidStack> containedFluid = FluidUtil.getFluidContained(box);
+    public static void renderFluidContents(ItemStack box, float yaw, PoseStack ms, MultiBufferSource buffer,
+            int light) {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.level == null)
+            return;
 
-        if (containedFluid.isEmpty() || containedFluid.get().isEmpty()) return;
+        FluidTank fluidTank = LadleItem.getFluidContents(box, mc.level.registryAccess());
+        FluidStack containedFluid = fluidTank.getFluid();
 
-        float fluidLevel = containedFluid.get().getAmount();
+        if (containedFluid.isEmpty())
+            return;
+
+        float fluidLevel = containedFluid.getAmount();
 
         float maxHeight = 10 / 16f;
         float hullWidth = 1 / 128f;
@@ -38,9 +45,10 @@ public class LadleItemRenderer extends CustomRenderedItemModelRenderer {
 
         float level = fluidLevel / LadleFluidHandler.LADLE_CAPACITY * totalHeight;
 
-        if (level == 0) return;
+        if (level == 0)
+            return;
 
-        boolean top = containedFluid.get().getFluid()
+        boolean top = containedFluid.getFluid()
                 .getFluidType()
                 .isLighterThanAir();
 
@@ -60,8 +68,8 @@ public class LadleItemRenderer extends CustomRenderedItemModelRenderer {
         ms.pushPose();
         ms.mulPose(Axis.YP.rotationDegrees(-yaw));
         ms.translate(-xMax / 2, level - totalHeight, -zMax / 2);
-        ForgeCatnipServices.FLUID_RENDERER.renderFluidBox(containedFluid.get(), xMin, yMin, zMin, xMax, yMax, zMax,
-                buffer, ms, light, false, true);
+        ColoredFluidRenderer.renderFluidBox(containedFluid, xMin, yMin, zMin, xMax, yMax, zMax,
+                buffer, ms, light, ColoredFluidRenderer.RGBAtoColor(255, 255, 255, 255), true);
         ms.popPose();
     }
 }

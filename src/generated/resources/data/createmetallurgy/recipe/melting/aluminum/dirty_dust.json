@@ -1,0 +1,30 @@
+{
+  "id": "createmetallurgy:melting/aluminum/dirty_dust",
+  "type": "createmetallurgy:melting",
+  "conditions": [
+    {
+      "type": "neoforge:not",
+      "value": {
+        "type": "neoforge:tag_empty",
+        "tag": "c:dirty_dusts/aluminum"
+      }
+    }
+  ],
+  "heatRequirement": "heated",
+  "ingredients": [
+    {
+      "tag": "c:dirty_dusts/aluminum"
+    }
+  ],
+  "processingTime": 30,
+  "results": [
+    {
+      "amount": 90,
+      "fluid": "createmetallurgy:molten_aluminum"
+    },
+    {
+      "amount": 30,
+      "fluid": "createmetallurgy:molten_slag"
+    }
+  ]
+}

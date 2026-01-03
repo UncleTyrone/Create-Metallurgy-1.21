@@ -1,0 +1,26 @@
+{
+  "id": "createmetallurgy:melting/steel/dust",
+  "type": "createmetallurgy:melting",
+  "conditions": [
+    {
+      "type": "neoforge:not",
+      "value": {
+        "type": "neoforge:tag_empty",
+        "tag": "c:dusts/steel"
+      }
+    }
+  ],
+  "heatRequirement": "heated",
+  "ingredients": [
+    {
+      "tag": "c:dusts/steel"
+    }
+  ],
+  "processingTime": 20,
+  "results": [
+    {
+      "amount": 90,
+      "fluid": "createmetallurgy:molten_steel"
+    }
+  ]
+}

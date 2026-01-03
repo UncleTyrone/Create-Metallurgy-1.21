@@ -1,0 +1,27 @@
+{
+  "id": "createmetallurgy:bulk_melting/zinc/block",
+  "type": "createmetallurgy:bulk_melting",
+  "conditions": [
+    {
+      "type": "neoforge:not",
+      "value": {
+        "type": "neoforge:tag_empty",
+        "tag": "c:storage_blocks/zinc"
+      }
+    }
+  ],
+  "ingredients": [
+    {
+      "tag": "c:storage_blocks/zinc"
+    }
+  ],
+  "maxHeatRequirement": 50,
+  "minHeatRequirement": 2,
+  "processingTime": 224,
+  "results": [
+    {
+      "amount": 810,
+      "fluid": "createmetallurgy:molten_zinc"
+    }
+  ]
+}

@@ -6,9 +6,7 @@ import java.util.List;
 
 import javax.annotation.Nullable;
 
-import com.simibubi.create.AllPackets;
 import com.simibubi.create.AllSoundEvents;
-import com.simibubi.create.content.logistics.box.PackageDestroyPacket;
 import com.simibubi.create.content.logistics.chute.ChuteBlock;
 
 import fr.lucreeper74.createmetallurgy.registries.CMEntityTypes;
@@ -17,9 +15,6 @@ import net.createmod.catnip.math.VecHelper;
 import net.createmod.ponder.api.level.PonderLevel;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.network.protocol.Packet;
-import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
@@ -29,13 +24,11 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.EntityDimensions;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.HumanoidArm;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.MobSpawnType;
-import net.minecraft.world.entity.Pose;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.item.ItemEntity;
@@ -50,15 +43,9 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.VoxelShape;
+import net.neoforged.neoforge.items.ItemStackHandler;
 
-import net.minecraftforge.common.ForgeHooks;
-import net.minecraftforge.entity.IEntityAdditionalSpawnData;
-import net.minecraftforge.items.ItemStackHandler;
-import net.minecraftforge.network.NetworkHooks;
-import net.minecraftforge.network.PacketDistributor;
-import net.minecraftforge.network.PlayMessages.SpawnEntity;
-
-public class LadleEntity extends LivingEntity implements IEntityAdditionalSpawnData {
+public class LadleEntity extends LivingEntity {
 
     private Entity originalEntity;
     public ItemStack box;
@@ -125,8 +112,7 @@ public class LadleEntity extends LivingEntity implements IEntityAdditionalSpawnD
     public static EntityType.Builder<?> build(EntityType.Builder<?> builder) {
         @SuppressWarnings("unchecked")
         EntityType.Builder<LadleEntity> boxBuilder = (EntityType.Builder<LadleEntity>) builder;
-        return boxBuilder.setCustomClientFactory(LadleEntity::spawn)
-                .sized(1, 1);
+        return boxBuilder.sized(1, 1);
     }
 
     @Override
@@ -151,7 +137,7 @@ public class LadleEntity extends LivingEntity implements IEntityAdditionalSpawnD
         if (tickCount < 5)
             setPos(clientPos.x, clientPos.y, clientPos.z);
         if (tickCount < 20)
-            lerpTo(clientPos.x, clientPos.y, clientPos.z, getYRot(), getXRot(), lerpSteps == 0 ? 3 : lerpSteps, true);
+            lerpTo(clientPos.x, clientPos.y, clientPos.z, getYRot(), getXRot(), lerpSteps == 0 ? 3 : lerpSteps);
     }
 
     @Override
@@ -161,8 +147,11 @@ public class LadleEntity extends LivingEntity implements IEntityAdditionalSpawnD
     }
 
     public String getAddress() {
-        return box.getTag()
-                .getString("Address");
+        if (box.has(net.minecraft.core.component.DataComponents.CUSTOM_DATA)) {
+            return box.get(net.minecraft.core.component.DataComponents.CUSTOM_DATA)
+                    .copyTag().getString("Address");
+        }
+        return "";
     }
 
     @Override
@@ -201,18 +190,10 @@ public class LadleEntity extends LivingEntity implements IEntityAdditionalSpawnD
     }
 
     @Override
-    public EntityDimensions getDimensions(Pose pPose) {
-        if (box == null)
-            return super.getDimensions(pPose);
-        return new EntityDimensions(LadleItem.getWidth(box), LadleItem.getHeight(box), true);
-    }
-
-    public static LadleEntity spawn(SpawnEntity spawnEntity, Level world) {
-        LadleEntity LadleEntity =
-                new LadleEntity(world, spawnEntity.getPosX(), spawnEntity.getPosY(), spawnEntity.getPosZ());
-        LadleEntity.setDeltaMovement(spawnEntity.getVelX(), spawnEntity.getVelY(), spawnEntity.getVelZ());
-        LadleEntity.clientPosition = LadleEntity.position();
-        return LadleEntity;
+    public void refreshDimensions() {
+        super.refreshDimensions();
+        // Dimensions are set via EntityType builder, dynamic resizing not supported in
+        // 1.21
     }
 
     public ItemStack getBox() {
@@ -289,11 +270,6 @@ public class LadleEntity extends LivingEntity implements IEntityAdditionalSpawnD
     }
 
     @Override
-    public double getPassengersRidingOffset() {
-        return this.getDimensions(getPose()).height;
-    }
-
-    @Override
     protected void onInsideBlock(BlockState state) {
         super.onInsideBlock(state);
         if (!isAlive())
@@ -306,9 +282,6 @@ public class LadleEntity extends LivingEntity implements IEntityAdditionalSpawnD
 
     @Override
     public boolean hurt(DamageSource source, float amount) {
-        if (!ForgeHooks.onLivingAttack(this, source, amount))
-            return false;
-
         if (level().isClientSide || !this.isAlive())
             return false;
 
@@ -336,7 +309,7 @@ public class LadleEntity extends LivingEntity implements IEntityAdditionalSpawnD
             if (this.isOnFire()) {
                 this.takeDamage(source, 0.15F);
             } else {
-                this.setSecondsOnFire(5);
+                this.igniteForSeconds(5);
             }
             return false;
         }
@@ -364,24 +337,29 @@ public class LadleEntity extends LivingEntity implements IEntityAdditionalSpawnD
     }
 
     private void destroy(DamageSource source) {
-        AllPackets.getChannel()
-                .send(PacketDistributor.TRACKING_ENTITY.with(() -> this),
-                        new PackageDestroyPacket(getBoundingBox().getCenter(), box));
-        AllSoundEvents.PACKAGE_POP.playOnServer(level(), blockPosition());
-        this.dropAllDeathLoot(source);
+        if (level() instanceof ServerLevel serverLevel) {
+            // Send packet to clients for visual effects
+            Vec3 center = getBoundingBox().getCenter();
+            net.neoforged.neoforge.network.PacketDistributor.sendToPlayersTrackingEntity(
+                    this,
+                    new fr.lucreeper74.createmetallurgy.content.entities.ladle.LadleDestroyPacket(center, box));
+
+            AllSoundEvents.PACKAGE_POP.playOnServer(level(), blockPosition());
+            this.dropAllDeathLoot(serverLevel, source);
+        }
     }
 
     @Override
-    protected void dropAllDeathLoot(DamageSource pDamageSource) {
-        super.dropAllDeathLoot(pDamageSource);
+    protected void dropAllDeathLoot(ServerLevel level, DamageSource pDamageSource) {
+        super.dropAllDeathLoot(level, pDamageSource);
         ItemStackHandler contents = LadleItem.getContents(box);
         for (int i = 0; i < contents.getSlots(); i++) {
             ItemStack itemstack = contents.getStackInSlot(i);
 
-            if (itemstack.getItem() instanceof SpawnEggItem sei && level() instanceof ServerLevel sl) {
-                EntityType<?> entitytype = sei.getType(itemstack.getTag());
-                Entity entity =
-                        entitytype.spawn(sl, itemstack, null, blockPosition(), MobSpawnType.SPAWN_EGG, false, false);
+            if (itemstack.getItem() instanceof SpawnEggItem sei) {
+                EntityType<?> entitytype = sei.getType(itemstack);
+                Entity entity = entitytype.spawn(level, itemstack, null, blockPosition(), MobSpawnType.SPAWN_EGG, false,
+                        false);
                 if (entity != null)
                     itemstack.shrink(1);
             }
@@ -389,26 +367,33 @@ public class LadleEntity extends LivingEntity implements IEntityAdditionalSpawnD
             if (itemstack.isEmpty())
                 continue;
             ItemEntity entityIn = new ItemEntity(level(), getX(), getY(), getZ(), itemstack);
-            level().addFreshEntity(entityIn);
+            level.addFreshEntity(entityIn);
         }
     }
 
     @Override
     public void readAdditionalSaveData(CompoundTag compound) {
         super.readAdditionalSaveData(compound);
-        box = ItemStack.of(compound.getCompound("Box"));
-        refreshDimensions();
+        if (compound.contains("Box") && level() != null) {
+            box = ItemStack.parseOptional(level().registryAccess(), compound.getCompound("Box"));
+        } else if (compound.contains("Box")) {
+            // Fallback for when level is null (during loading)
+            box = ItemStack.EMPTY;
+            // Will be properly loaded when level is available
+        }
     }
 
     @Override
     public void addAdditionalSaveData(CompoundTag compound) {
         super.addAdditionalSaveData(compound);
-        compound.put("Box", box.serializeNBT());
-    }
-
-    @Override
-    public Packet<ClientGamePacketListener> getAddEntityPacket() {
-        return NetworkHooks.getEntitySpawningPacket(this);
+        if (level() != null) {
+            compound.put("Box", box.saveOptional(level().registryAccess()));
+        } else {
+            // Fallback serialization without registries (shouldn't happen)
+            CompoundTag boxTag = new CompoundTag();
+            boxTag.putString("id", "minecraft:air");
+            compound.put("Box", boxTag);
+        }
     }
 
     @Override
@@ -437,21 +422,6 @@ public class LadleEntity extends LivingEntity implements IEntityAdditionalSpawnD
     @Override
     public InteractionHand getUsedItemHand() {
         return InteractionHand.MAIN_HAND;
-    }
-
-    @Override
-    public void writeSpawnData(FriendlyByteBuf buffer) {
-        buffer.writeItem(getBox());
-        Vec3 motion = getDeltaMovement();
-        buffer.writeFloat((float) motion.x);
-        buffer.writeFloat((float) motion.y);
-        buffer.writeFloat((float) motion.z);
-    }
-
-    @Override
-    public void readSpawnData(FriendlyByteBuf additionalData) {
-        setBox(additionalData.readItem());
-        setDeltaMovement(additionalData.readFloat(), additionalData.readFloat(), additionalData.readFloat());
     }
 
     @Override

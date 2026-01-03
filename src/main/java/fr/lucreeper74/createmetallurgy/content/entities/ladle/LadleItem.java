@@ -1,12 +1,10 @@
 package fr.lucreeper74.createmetallurgy.content.entities.ladle;
 
 import com.simibubi.create.AllEntityTypes;
-import com.simibubi.create.AllSoundEvents;
 import com.simibubi.create.content.fluids.FluidFX;
 import com.simibubi.create.content.logistics.box.PackageItem;
 import com.simibubi.create.content.logistics.box.PackageStyles;
 import com.simibubi.create.content.logistics.box.PackageStyles.PackageStyle;
-import com.simibubi.create.foundation.item.render.SimpleCustomRenderer;
 import com.simibubi.create.foundation.utility.CreateLang;
 import fr.lucreeper74.createmetallurgy.CreateMetallurgy;
 import net.createmod.catnip.math.VecHelper;
@@ -29,19 +27,18 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.Level;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
-import net.minecraftforge.client.extensions.common.IClientItemExtensions;
-import net.minecraftforge.common.capabilities.ICapabilityProvider;
-import net.minecraftforge.fluids.FluidStack;
-import net.minecraftforge.fluids.capability.IFluidHandler;
-import net.minecraftforge.fluids.capability.templates.FluidTank;
+import net.neoforged.neoforge.fluids.FluidStack;
+import net.neoforged.neoforge.fluids.capability.IFluidHandler;
+import net.neoforged.neoforge.fluids.capability.templates.FluidTank;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.Consumer;
 
 import static fr.lucreeper74.createmetallurgy.content.entities.ladle.LadleFluidHandler.LADLE_CAPACITY;
 
@@ -54,8 +51,9 @@ public class LadleItem extends PackageItem {
 
         PackageStyles.ALL_BOXES.remove(this); // Avoid touching Create's packages
         PackageStyles.STANDARD_BOXES.remove(this);
-//        LadleStyles.ALL_STYLES.add(this);
-//        (style.rare() ? LadleStyles.RARE_LADLES_STYLES : LadleStyles.STANDARD_LADLES_STYLES).add(this);
+        // LadleStyles.ALL_STYLES.add(this);
+        // (style.rare() ? LadleStyles.RARE_LADLES_STYLES :
+        // LadleStyles.STANDARD_LADLES_STYLES).add(this);
     }
 
     public static boolean isLadle(ItemStack stack) {
@@ -63,8 +61,9 @@ public class LadleItem extends PackageItem {
     }
 
     public static void clearRemainAddrs(ItemStack ladle) {
-        if (ladle.hasTag())
-            ladle.getTag().remove("RemainAddrs");
+        CompoundTag customData = getCustomData(ladle);
+        if (customData != null)
+            customData.remove("RemainAddrs");
     }
 
     public static void addRemainAddrs(ItemStack ladle, ArrayList<String> remainAddrs) {
@@ -77,47 +76,73 @@ public class LadleItem extends PackageItem {
             }
         }
         if (!list.isEmpty())
-            ladle.getOrCreateTag().put("RemainAddrs", list);
+            getOrCreateCustomData(ladle).put("RemainAddrs", list);
     }
 
     public static void setNextAddrs(ItemStack ladle) {
-        if (ladle.hasTag()) {
-            CompoundTag tag = ladle.getOrCreateTag();
-            if (tag.contains("RemainAddrs")) {
-                ListTag list = tag.getList("RemainAddrs", Tag.TAG_COMPOUND);
-                if (!list.isEmpty()) {
-                    tag.putString("Address", list.getCompound(0).getString("Address"));
-                    list.remove(0);
-                    tag.put("RemainAddrs", list);
-                }
+        CompoundTag tag = getCustomData(ladle);
+        if (tag != null && tag.contains("RemainAddrs")) {
+            ListTag list = tag.getList("RemainAddrs", Tag.TAG_COMPOUND);
+            if (!list.isEmpty()) {
+                tag.putString("Address", list.getCompound(0).getString("Address"));
+                list.remove(0);
+                tag.put("RemainAddrs", list);
             }
         }
     }
 
-    public static FluidTank getFluidContents(ItemStack ladle) {
+    private static @Nullable CompoundTag getCustomData(ItemStack stack) {
+        return stack.has(net.minecraft.core.component.DataComponents.CUSTOM_DATA)
+                ? stack.get(net.minecraft.core.component.DataComponents.CUSTOM_DATA).copyTag()
+                : null;
+    }
+
+    private static CompoundTag getOrCreateCustomData(ItemStack stack) {
+        if (!stack.has(net.minecraft.core.component.DataComponents.CUSTOM_DATA)) {
+            stack.set(net.minecraft.core.component.DataComponents.CUSTOM_DATA,
+                    net.minecraft.world.item.component.CustomData.of(new CompoundTag()));
+        }
+        return stack.get(net.minecraft.core.component.DataComponents.CUSTOM_DATA).copyTag();
+    }
+
+    public static FluidTank getFluidContents(ItemStack ladle, @Nullable HolderLookup.Provider registries) {
         FluidTank newTank = new FluidTank(LADLE_CAPACITY);
-        CompoundTag fluidNBT = ladle.getTagElement("Fluid");
-        if (fluidNBT != null && !fluidNBT.isEmpty())
-            newTank.readFromNBT(fluidNBT);
+        CompoundTag customData = getCustomData(ladle);
+        if (customData != null && customData.contains("Fluid")) {
+            CompoundTag fluidNBT = customData.getCompound("Fluid");
+            if (registries != null)
+                newTank.readFromNBT(registries, fluidNBT);
+        }
         return newTank;
     }
 
-    public static void setFluidContents(ItemStack ladle, FluidTank fluidTank) {
-        if (!fluidTank.isEmpty())
-            ladle.getOrCreateTag()
-                    .put("Fluid", fluidTank.writeToNBT(new CompoundTag()));
-        else
-            ladle.removeTagKey("Fluid");
+    public static void setFluidContents(ItemStack ladle, FluidTank fluidTank,
+            @Nullable HolderLookup.Provider registries) {
+        CompoundTag customData = getOrCreateCustomData(ladle);
+        if (!fluidTank.isEmpty() && registries != null) {
+            customData.put("Fluid", fluidTank.writeToNBT(registries, new CompoundTag()));
+            ladle.set(net.minecraft.core.component.DataComponents.CUSTOM_DATA,
+                    net.minecraft.world.item.component.CustomData.of(customData));
+        } else {
+            customData.remove("Fluid");
+            if (customData.isEmpty()) {
+                ladle.remove(net.minecraft.core.component.DataComponents.CUSTOM_DATA);
+            } else {
+                ladle.set(net.minecraft.core.component.DataComponents.CUSTOM_DATA,
+                        net.minecraft.world.item.component.CustomData.of(customData));
+            }
+        }
     }
 
     public static int getFluidAmount(ItemStack ladle) {
-        return LadleItem.getFluidContents(ladle).getFluidAmount();
+        return LadleItem.getFluidContents(ladle, null).getFluidAmount();
     }
 
     @Override
-    public void appendHoverText(ItemStack stack, Level level, List<Component> tooltipComponents, TooltipFlag isAdvanced) {
-        super.appendHoverText(stack, level, tooltipComponents, isAdvanced);
-        CompoundTag nbt = stack.getOrCreateTag();
+    public void appendHoverText(ItemStack stack, Item.TooltipContext context, List<Component> tooltipComponents,
+            TooltipFlag isAdvanced) {
+        super.appendHoverText(stack, context, tooltipComponents, isAdvanced);
+        CompoundTag nbt = getOrCreateCustomData(stack);
 
         /* Remaining Addresses tooltips */
         if (nbt.contains("RemainAddrs", Tag.TAG_LIST)) {
@@ -142,10 +167,10 @@ public class LadleItem extends PackageItem {
         }
 
         /* Fluid tooltips */
-        FluidStack fluid = getFluidContents(stack).getFluidInTank(0);
+        FluidStack fluid = getFluidContents(stack, context.registries()).getFluidInTank(0);
         if (!fluid.isEmpty()) {
             tooltipComponents.add(Component.empty()); // Space
-            tooltipComponents.add(fluid.getDisplayName()
+            tooltipComponents.add(fluid.getHoverName()
                     .copy()
                     .append(" ")
                     .append(String.valueOf(fluid.getAmount()))
@@ -157,7 +182,7 @@ public class LadleItem extends PackageItem {
     @Override
     public InteractionResultHolder<ItemStack> open(Level worldIn, Player playerIn, InteractionHand handIn) {
         ItemStack ladle = playerIn.getItemInHand(handIn);
-        FluidTank fluidContainer = getFluidContents(ladle);
+        FluidTank fluidContainer = getFluidContents(ladle, worldIn.registryAccess());
 
         if (!fluidContainer.isEmpty()) {
             FluidStack drained = fluidContainer.drain(1000, IFluidHandler.FluidAction.EXECUTE);
@@ -168,7 +193,9 @@ public class LadleItem extends PackageItem {
 
                 ParticleOptions fluidParticle = FluidFX.getFluidParticle(drained);
                 Vec3 position = playerIn.position();
-                AllSoundEvents.STEAM.playOnServer(worldIn, playerIn.blockPosition()); // Todo: change the sound
+                // Play appropriate sound based on fluid type (molten metals use lava sounds)
+                worldIn.playSound(null, playerIn.blockPosition(), SoundEvents.BUCKET_EMPTY_LAVA, SoundSource.PLAYERS,
+                        0.5f, 1.0f);
                 if (worldIn.isClientSide()) {
                     for (int i = 0; i < 10; i++) {
                         Vec3 motion = VecHelper.offsetRandomly(Vec3.ZERO, worldIn.getRandom(), .125f);
@@ -180,7 +207,8 @@ public class LadleItem extends PackageItem {
                                 motion.y, motion.z);
                     }
                 }
-                LadleItem.setFluidContents(ladle, fluidContainer); // Update content in hand ladle item
+                LadleItem.setFluidContents(ladle, fluidContainer, worldIn.registryAccess()); // Update content in hand
+                                                                                             // ladle item
             }
         }
 
@@ -204,7 +232,7 @@ public class LadleItem extends PackageItem {
                 .getAxis()
                 .isHorizontal())
             point = point.add(Vec3.atLowerCornerOf(context.getClickedFace()
-                            .getNormal())
+                    .getNormal())
                     .scale(r));
 
         AABB scanBB = new AABB(point, point).inflate(r, 0, r)
@@ -226,7 +254,7 @@ public class LadleItem extends PackageItem {
     public void releaseUsing(ItemStack stack, Level world, LivingEntity entity, int ticks) {
         if (!(entity instanceof Player player))
             return;
-        int i = this.getUseDuration(stack) - ticks;
+        int i = this.getUseDuration(stack, entity) - ticks;
         if (i < 0)
             return;
 
@@ -264,19 +292,5 @@ public class LadleItem extends PackageItem {
     @Override
     public Entity createEntity(Level world, Entity location, ItemStack itemstack) {
         return LadleEntity.fromDroppedItem(world, location, itemstack);
-    }
-
-    @Override
-    public @Nullable ICapabilityProvider initCapabilities(ItemStack stack, @Nullable CompoundTag nbt) {
-        if (this.getClass() == LadleItem.class)
-            return new LadleFluidHandler(stack);
-        else
-            return super.initCapabilities(stack, nbt);
-    }
-
-    @Override
-    public void initializeClient(Consumer<IClientItemExtensions> consumer) {
-        consumer.accept(SimpleCustomRenderer.create(this, new LadleItemRenderer()));
-        super.initializeClient(consumer);
     }
 }

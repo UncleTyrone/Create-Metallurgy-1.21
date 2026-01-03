@@ -4,7 +4,7 @@ import fr.lucreeper74.createmetallurgy.CreateMetallurgy;
 import net.minecraft.core.Holder;
 import net.minecraft.core.HolderGetter;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.data.worldgen.BootstapContext;
+import net.minecraft.data.worldgen.BootstrapContext;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.level.levelgen.VerticalAnchor;
 import net.minecraft.world.level.levelgen.feature.ConfiguredFeature;
@@ -15,7 +15,7 @@ import java.util.List;
 public class PlacedFeatures {
     public static final ResourceKey<PlacedFeature> WOLFRAMIE_ORE_PLACED_KEY = registerKey("wolframite_ore_placed");
 
-    public static void bootstrap(BootstapContext<PlacedFeature> context) {
+    public static void bootstrap(BootstrapContext<PlacedFeature> context) {
         HolderGetter<ConfiguredFeature<?, ?>> configuredFeatures = context.lookup(Registries.CONFIGURED_FEATURE);
 
         register(context, WOLFRAMIE_ORE_PLACED_KEY, configuredFeatures.getOrThrow(ConfiguredFeatures.WOLFRAMIE_ORE_KEY),
@@ -24,10 +24,10 @@ public class PlacedFeatures {
     }
 
     private static ResourceKey<PlacedFeature> registerKey(String name) {
-        return ResourceKey.create(Registries.PLACED_FEATURE, CreateMetallurgy.genRL(name));
+        return ResourceKey.create(Registries.PLACED_FEATURE, CreateMetallurgy.asResource(name));
     }
 
-    //Ore Placements Functions
+    // Ore Placements Functions
     public static List<PlacementModifier> orePlacement(PlacementModifier p_195347_, PlacementModifier p_195348_) {
         return List.of(p_195347_, InSquarePlacement.spread(), p_195348_, BiomeFilter.biome());
     }
@@ -40,8 +40,9 @@ public class PlacedFeatures {
         return orePlacement(RarityFilter.onAverageOnceEvery(p_195350_), p_195351_);
     }
 
-    private static void register(BootstapContext<PlacedFeature> context, ResourceKey<PlacedFeature> key, Holder<ConfiguredFeature<?, ?>> configuration,
-                                 List<PlacementModifier> modifiers) {
+    private static void register(BootstrapContext<PlacedFeature> context, ResourceKey<PlacedFeature> key,
+            Holder<ConfiguredFeature<?, ?>> configuration,
+            List<PlacementModifier> modifiers) {
         context.register(key, new PlacedFeature(configuration, List.copyOf(modifiers)));
     }
 }

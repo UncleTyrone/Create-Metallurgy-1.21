@@ -1,0 +1,27 @@
+{
+  "id": "createmetallurgy:bulk_melting/tin/block",
+  "type": "createmetallurgy:bulk_melting",
+  "conditions": [
+    {
+      "type": "neoforge:not",
+      "value": {
+        "type": "neoforge:tag_empty",
+        "tag": "c:storage_blocks/tin"
+      }
+    }
+  ],
+  "ingredients": [
+    {
+      "tag": "c:storage_blocks/tin"
+    }
+  ],
+  "maxHeatRequirement": 50,
+  "minHeatRequirement": 1,
+  "processingTime": 224,
+  "results": [
+    {
+      "amount": 810,
+      "fluid": "createmetallurgy:molten_tin"
+    }
+  ]
+}

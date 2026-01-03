@@ -3,8 +3,7 @@ package fr.lucreeper74.createmetallurgy.content.blocks.faucet;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import com.simibubi.create.foundation.blockEntity.renderer.SafeBlockEntityRenderer;
-import com.simibubi.create.foundation.fluid.FluidRenderer;
-import net.createmod.catnip.platform.ForgeCatnipServices;
+import fr.lucreeper74.createmetallurgy.utils.ColoredFluidRenderer;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.core.BlockPos;
@@ -12,7 +11,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.shapes.VoxelShape;
-import net.minecraftforge.fluids.FluidStack;
+import net.neoforged.neoforge.fluids.FluidStack;
 
 public class FaucetRenderer extends SafeBlockEntityRenderer<FaucetBlockEntity> {
 
@@ -20,7 +19,8 @@ public class FaucetRenderer extends SafeBlockEntityRenderer<FaucetBlockEntity> {
     }
 
     @Override
-    protected void renderSafe(FaucetBlockEntity be, float partialTicks, PoseStack ms, MultiBufferSource bufferSource, int light, int overlay) {
+    protected void renderSafe(FaucetBlockEntity be, float partialTicks, PoseStack ms, MultiBufferSource bufferSource,
+            int light, int overlay) {
         if (be.getBlockState().getValue(FaucetBlock.OPEN)) {
             FluidStack fluidStack = be.getRenderFluid();
 
@@ -35,7 +35,9 @@ public class FaucetRenderer extends SafeBlockEntityRenderer<FaucetBlockEntity> {
 
                 // For the fluid in the faucet
                 if (facing != Direction.DOWN)
-                    ForgeCatnipServices.FLUID_RENDERER.renderFluidBox(fluidStack, 5/16f, 7/16f, 8/16f, 11/16f, 10/16f, 15/16f, bufferSource, ms, light, false, true);
+                    ColoredFluidRenderer.renderFluidBox(fluidStack, 5 / 16f, 7 / 16f, 8 / 16f, 11 / 16f, 10 / 16f,
+                            15 / 16f, bufferSource, ms, light, ColoredFluidRenderer.RGBAtoColor(255, 255, 255, 255),
+                            true);
 
                 // For the fluid stream
                 Level level = be.getLevel();
@@ -46,9 +48,10 @@ public class FaucetRenderer extends SafeBlockEntityRenderer<FaucetBlockEntity> {
                     maxY = shape.bounds().maxY;
 
                 float radius = 2f;
-                AABB bb = new AABB(.5f, 9/16f, .5f, .5f, -be.getFallingDistance() + maxY, .5f).inflate(radius / 32f);
-                ForgeCatnipServices.FLUID_RENDERER.renderFluidBox(fluidStack, (float) bb.minX, (float) bb.minY, (float) bb.minZ,
-                        (float) bb.maxX, (float) bb.maxY, (float) bb.maxZ, bufferSource, ms, light, true, true);
+                AABB bb = new AABB(.5f, 9 / 16f, .5f, .5f, -be.getFallingDistance() + maxY, .5f).inflate(radius / 32f);
+                ColoredFluidRenderer.renderFluidBox(fluidStack, (float) bb.minX, (float) bb.minY, (float) bb.minZ,
+                        (float) bb.maxX, (float) bb.maxY, (float) bb.maxZ, bufferSource, ms, light,
+                        ColoredFluidRenderer.RGBAtoColor(255, 255, 255, 255), true);
 
                 ms.popPose();
             }

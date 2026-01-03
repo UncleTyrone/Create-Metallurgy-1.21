@@ -1,0 +1,26 @@
+{
+  "id": "createmetallurgy:melting/obdurium/coin",
+  "type": "createmetallurgy:melting",
+  "conditions": [
+    {
+      "type": "neoforge:not",
+      "value": {
+        "type": "neoforge:tag_empty",
+        "tag": "c:coins/obdurium"
+      }
+    }
+  ],
+  "heatRequirement": "superheated",
+  "ingredients": [
+    {
+      "tag": "c:coins/obdurium"
+    }
+  ],
+  "processingTime": 4,
+  "results": [
+    {
+      "amount": 10,
+      "fluid": "createmetallurgy:molten_obdurium"
+    }
+  ]
+}

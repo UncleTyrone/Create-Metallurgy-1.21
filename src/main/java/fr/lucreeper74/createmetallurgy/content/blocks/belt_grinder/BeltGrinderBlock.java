@@ -17,6 +17,8 @@ import net.minecraft.util.RandomSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -68,9 +70,10 @@ public class BeltGrinderBlock extends HorizontalKineticBlock implements IBE<Belt
                 .getAxis();
     }
 
-    @Override
+    // Note: use() method was removed from Block in 1.21, but kept here for custom
+    // interaction handling
     public InteractionResult use(BlockState state, Level worldIn, BlockPos pos, Player player, InteractionHand handIn,
-                                 BlockHitResult ray) {
+            BlockHitResult ray) {
         if (player.isSpectator() || !player.getItemInHand(handIn).isEmpty())
             return InteractionResult.PASS;
         if (ray.getDirection() != Direction.UP)
@@ -105,18 +108,27 @@ public class BeltGrinderBlock extends HorizontalKineticBlock implements IBE<Belt
             if (be.getSpeed() == 0)
                 return;
 
+            if (!(entityIn instanceof LivingEntity livingEntity))
+                return;
+
             Level level = entityIn.level();
-            for (ItemStack armor : entityIn.getArmorSlots()) {
+            EquipmentSlot[] armorSlots = { EquipmentSlot.HEAD, EquipmentSlot.CHEST, EquipmentSlot.LEGS,
+                    EquipmentSlot.FEET };
+            for (EquipmentSlot slot : armorSlots) {
+                ItemStack armor = livingEntity.getItemBySlot(slot);
                 if (armor.isEmpty() || !armor.isDamageableItem() || armor.getDamageValue() >= armor.getMaxDamage())
                     entityIn.hurt(CMDamageTypes.grinder(level), (float) DrillBlock.getDamage(speed));
 
-                //Hurt armor every 10 ticks at max speed to every 90 ticks at lower speed -> f(x)= (-10/32) * x + 90
-                if(AnimationTickHolder.getTicks() % Math.round((-10f * speed) / 32f + 90) == 0)
-                    armor.hurt(1, entityIn.level().getRandom(), null);
+                // Hurt armor every 10 ticks at max speed to every 90 ticks at lower speed ->
+                // f(x)= (-10/32) * x + 90
+                if (AnimationTickHolder.getTicks() % Math.round((-10f * speed) / 32f + 90) == 0)
+                    armor.hurtAndBreak(1, livingEntity, slot);
 
-                if(!armor.isEmpty()) {
+                if (!armor.isEmpty()) {
                     float pitch = (speed / 256f) + .8f;
-                    entityIn.playSound(SoundEvents.GRINDSTONE_USE, .3f, entityIn.level().random.nextFloat() * 0.2F + pitch);
+
+                    entityIn.playSound(SoundEvents.GRINDSTONE_USE, .3f,
+                            entityIn.level().random.nextFloat() * 0.2F + pitch);
                     RandomSource r = level.getRandom();
                     Vec3 c = VecHelper.getCenterOf(be.getBlockPos());
                     Vec3 v = c.add(VecHelper.offsetRandomly(Vec3.ZERO, r, .25f)
@@ -124,7 +136,7 @@ public class BeltGrinderBlock extends HorizontalKineticBlock implements IBE<Belt
                     level.addParticle(ParticleTypes.CRIT, v.x, v.y + .4f, v.z, 0, 0, 0);
                 }
                 return;
-                }
+            }
         });
     }
 

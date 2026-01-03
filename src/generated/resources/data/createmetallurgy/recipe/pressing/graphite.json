@@ -1,0 +1,14 @@
+{
+  "id": "createmetallurgy:pressing/graphite",
+  "type": "create:pressing",
+  "ingredients": [
+    {
+      "item": "createmetallurgy:graphite"
+    }
+  ],
+  "results": [
+    {
+      "id": "createmetallurgy:graphite_blank_mold"
+    }
+  ]
+}

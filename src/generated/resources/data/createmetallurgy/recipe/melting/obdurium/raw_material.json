@@ -1,0 +1,30 @@
+{
+  "id": "createmetallurgy:melting/obdurium/raw_material",
+  "type": "createmetallurgy:melting",
+  "conditions": [
+    {
+      "type": "neoforge:not",
+      "value": {
+        "type": "neoforge:tag_empty",
+        "tag": "c:raw_materials/obdurium"
+      }
+    }
+  ],
+  "heatRequirement": "superheated",
+  "ingredients": [
+    {
+      "tag": "c:raw_materials/obdurium"
+    }
+  ],
+  "processingTime": 40,
+  "results": [
+    {
+      "amount": 90,
+      "fluid": "createmetallurgy:molten_obdurium"
+    },
+    {
+      "amount": 45,
+      "fluid": "createmetallurgy:molten_slag"
+    }
+  ]
+}

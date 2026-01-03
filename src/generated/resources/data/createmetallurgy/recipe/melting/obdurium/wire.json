@@ -1,0 +1,26 @@
+{
+  "id": "createmetallurgy:melting/obdurium/wire",
+  "type": "createmetallurgy:melting",
+  "conditions": [
+    {
+      "type": "neoforge:not",
+      "value": {
+        "type": "neoforge:tag_empty",
+        "tag": "c:wires/obdurium"
+      }
+    }
+  ],
+  "heatRequirement": "superheated",
+  "ingredients": [
+    {
+      "tag": "c:wires/obdurium"
+    }
+  ],
+  "processingTime": 16,
+  "results": [
+    {
+      "amount": 45,
+      "fluid": "createmetallurgy:molten_obdurium"
+    }
+  ]
+}

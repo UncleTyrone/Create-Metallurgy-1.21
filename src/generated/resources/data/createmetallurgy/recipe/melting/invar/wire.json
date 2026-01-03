@@ -1,0 +1,26 @@
+{
+  "id": "createmetallurgy:melting/invar/wire",
+  "type": "createmetallurgy:melting",
+  "conditions": [
+    {
+      "type": "neoforge:not",
+      "value": {
+        "type": "neoforge:tag_empty",
+        "tag": "c:wires/invar"
+      }
+    }
+  ],
+  "heatRequirement": "heated",
+  "ingredients": [
+    {
+      "tag": "c:wires/invar"
+    }
+  ],
+  "processingTime": 16,
+  "results": [
+    {
+      "amount": 45,
+      "fluid": "createmetallurgy:molten_invar"
+    }
+  ]
+}

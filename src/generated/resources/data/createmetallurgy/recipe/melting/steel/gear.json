@@ -1,0 +1,26 @@
+{
+  "id": "createmetallurgy:melting/steel/gear",
+  "type": "createmetallurgy:melting",
+  "conditions": [
+    {
+      "type": "neoforge:not",
+      "value": {
+        "type": "neoforge:tag_empty",
+        "tag": "c:gears/steel"
+      }
+    }
+  ],
+  "heatRequirement": "heated",
+  "ingredients": [
+    {
+      "tag": "c:gears/steel"
+    }
+  ],
+  "processingTime": 160,
+  "results": [
+    {
+      "amount": 360,
+      "fluid": "createmetallurgy:molten_steel"
+    }
+  ]
+}

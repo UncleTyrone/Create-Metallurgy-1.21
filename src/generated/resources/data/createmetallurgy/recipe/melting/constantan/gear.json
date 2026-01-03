@@ -1,0 +1,26 @@
+{
+  "id": "createmetallurgy:melting/constantan/gear",
+  "type": "createmetallurgy:melting",
+  "conditions": [
+    {
+      "type": "neoforge:not",
+      "value": {
+        "type": "neoforge:tag_empty",
+        "tag": "c:gears/constantan"
+      }
+    }
+  ],
+  "heatRequirement": "heated",
+  "ingredients": [
+    {
+      "tag": "c:gears/constantan"
+    }
+  ],
+  "processingTime": 160,
+  "results": [
+    {
+      "amount": 360,
+      "fluid": "createmetallurgy:molten_constantan"
+    }
+  ]
+}

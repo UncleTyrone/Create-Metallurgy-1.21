@@ -1,0 +1,27 @@
+{
+  "id": "createmetallurgy:casting_in_table/bronze/gear",
+  "type": "createmetallurgy:casting_in_table",
+  "conditions": [
+    {
+      "type": "neoforge:not",
+      "value": {
+        "type": "neoforge:tag_empty",
+        "tag": "c:gears/bronze"
+      }
+    }
+  ],
+  "ingredients": [
+    {
+      "item": "createmetallurgy:graphite_gear_mold"
+    },
+    {
+      "amount": 360,
+      "fluid": "createmetallurgy:molten_bronze",
+      "nbt": {}
+    }
+  ],
+  "processingTime": 240,
+  "result": {
+    "tag": "c:gears/bronze"
+  }
+}

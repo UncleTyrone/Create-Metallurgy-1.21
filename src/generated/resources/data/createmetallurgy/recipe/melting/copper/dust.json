@@ -1,0 +1,26 @@
+{
+  "id": "createmetallurgy:melting/copper/dust",
+  "type": "createmetallurgy:melting",
+  "conditions": [
+    {
+      "type": "neoforge:not",
+      "value": {
+        "type": "neoforge:tag_empty",
+        "tag": "c:dusts/copper"
+      }
+    }
+  ],
+  "heatRequirement": "heated",
+  "ingredients": [
+    {
+      "tag": "c:dusts/copper"
+    }
+  ],
+  "processingTime": 20,
+  "results": [
+    {
+      "amount": 90,
+      "fluid": "createmetallurgy:molten_copper"
+    }
+  ]
+}

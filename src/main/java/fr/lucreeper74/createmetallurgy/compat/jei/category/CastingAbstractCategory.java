@@ -1,7 +1,7 @@
 package fr.lucreeper74.createmetallurgy.compat.jei.category;
 
 import com.simibubi.create.compat.jei.category.CreateRecipeCategory;
-import com.simibubi.create.foundation.fluid.FluidIngredient;
+import net.neoforged.neoforge.fluids.crafting.SizedFluidIngredient;
 import fr.lucreeper74.createmetallurgy.content.blocks.casting.recipe.CastingRecipe;
 import fr.lucreeper74.createmetallurgy.utils.CMLang;
 import mezz.jei.api.gui.builder.IRecipeLayoutBuilder;
@@ -26,7 +26,7 @@ public abstract class CastingAbstractCategory<T extends CastingRecipe> extends C
 
     @Override
     public void setRecipe(IRecipeLayoutBuilder builder, T recipe, IFocusGroup focuses) {
-        FluidIngredient fluidIngredient = recipe.getFluidIngredient();
+        SizedFluidIngredient fluidIngredient = recipe.getFluidIngredient();
         addFluidSlot(builder, 15, 6, fluidIngredient);
 
         Ingredient mold = recipe.getIngredient();

@@ -13,14 +13,14 @@ import net.minecraft.world.level.material.Fluid;
 import org.jetbrains.annotations.Nullable;
 
 import static fr.lucreeper74.createmetallurgy.registries.CMTags.CMNameSpace.CREATE_METALLURGY;
-import static fr.lucreeper74.createmetallurgy.registries.CMTags.CMNameSpace.FORGE;
+import static fr.lucreeper74.createmetallurgy.registries.CMTags.CMNameSpace.C;
 
 public class CMTags {
 
     public enum CMNameSpace {
 
         CREATE_METALLURGY(CreateMetallurgy.MOD_ID),
-        FORGE("forge"),
+        C("c"), // Common namespace for NeoForge 1.21+
         ;
 
         public final String id;
@@ -30,7 +30,7 @@ public class CMTags {
         }
 
         public ResourceLocation id(String path) {
-            return new ResourceLocation(this.id, path);
+            return ResourceLocation.fromNamespaceAndPath(this.id, path);
         }
 
         public ResourceLocation id(Enum<?> entry, @Nullable String pathOverride) {
@@ -40,7 +40,7 @@ public class CMTags {
 
     public enum CMBlockTags {
 
-        COKE_STORAGE_BLOCKS(FORGE, "storage_blocks/coke_block"),
+        COKE_STORAGE_BLOCKS(C, "storage_blocks/coke_block"),
         LIGHT_BULB,
 
         ;
@@ -67,13 +67,13 @@ public class CMTags {
     public enum CMItemTags {
 
         GRAPHITE_MOLDS,
-        GRAPHITE(FORGE),
-        DIRTY_DUSTS(FORGE),
-        WIRES(FORGE),
+        GRAPHITE(C),
+        DIRTY_DUSTS(C),
+        WIRES(C),
         LADLE,
-        COKE_STORAGE_BLOCKS(FORGE, "storage_blocks/coke_block"),
+        COKE_STORAGE_BLOCKS(C, "storage_blocks/coke_block"),
         LIGHT_BULB,
-        COAL_COKE(FORGE),
+        COAL_COKE(C),
         SLAG,
 
         ;
@@ -99,7 +99,7 @@ public class CMTags {
 
     public enum CMFluidTags {
 
-        MOLTEN_MATERIAL(FORGE),
+        MOLTEN_MATERIAL(C),
         ;
 
         public final TagKey<Fluid> tag;

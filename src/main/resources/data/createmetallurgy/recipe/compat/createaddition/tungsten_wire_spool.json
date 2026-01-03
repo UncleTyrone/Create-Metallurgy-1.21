@@ -1,0 +1,17 @@
+{
+  "id": "createmetallurgy:compat/createaddition/tungsten_wire_spool",
+  "conditions": [
+    {
+      "type": "neoforge:mod_loaded",
+      "modid": "createaddition"
+    }
+  ],
+  "type": "createaddition:rolling",
+  "input": {
+    "tag": "c:plates/tungsten"
+  },
+  "result": {
+    "id": "createmetallurgy:tungsten_wire",
+    "count": 2
+  }
+}

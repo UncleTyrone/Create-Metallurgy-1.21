@@ -1,0 +1,26 @@
+{
+  "id": "createmetallurgy:melting/invar/dust",
+  "type": "createmetallurgy:melting",
+  "conditions": [
+    {
+      "type": "neoforge:not",
+      "value": {
+        "type": "neoforge:tag_empty",
+        "tag": "c:dusts/invar"
+      }
+    }
+  ],
+  "heatRequirement": "heated",
+  "ingredients": [
+    {
+      "tag": "c:dusts/invar"
+    }
+  ],
+  "processingTime": 20,
+  "results": [
+    {
+      "amount": 90,
+      "fluid": "createmetallurgy:molten_invar"
+    }
+  ]
+}

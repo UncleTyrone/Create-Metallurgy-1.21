@@ -1,0 +1,26 @@
+{
+  "id": "createmetallurgy:melting/bronze/nugget",
+  "type": "createmetallurgy:melting",
+  "conditions": [
+    {
+      "type": "neoforge:not",
+      "value": {
+        "type": "neoforge:tag_empty",
+        "tag": "c:nuggets/bronze"
+      }
+    }
+  ],
+  "heatRequirement": "heated",
+  "ingredients": [
+    {
+      "tag": "c:nuggets/bronze"
+    }
+  ],
+  "processingTime": 4,
+  "results": [
+    {
+      "amount": 10,
+      "fluid": "createmetallurgy:molten_bronze"
+    }
+  ]
+}

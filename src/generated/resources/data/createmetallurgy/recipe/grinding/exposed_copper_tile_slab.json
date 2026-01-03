@@ -1,0 +1,15 @@
+{
+  "id": "createmetallurgy:grinding/exposed_copper_tile_slab",
+  "type": "createmetallurgy:grinding",
+  "ingredients": [
+    {
+      "item": "create:exposed_copper_tile_slab"
+    }
+  ],
+  "processingTime": 50,
+  "results": [
+    {
+      "id": "create:copper_tile_slab"
+    }
+  ]
+}

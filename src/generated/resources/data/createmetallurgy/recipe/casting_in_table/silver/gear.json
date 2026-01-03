@@ -1,0 +1,27 @@
+{
+  "id": "createmetallurgy:casting_in_table/silver/gear",
+  "type": "createmetallurgy:casting_in_table",
+  "conditions": [
+    {
+      "type": "neoforge:not",
+      "value": {
+        "type": "neoforge:tag_empty",
+        "tag": "c:gears/silver"
+      }
+    }
+  ],
+  "ingredients": [
+    {
+      "item": "createmetallurgy:graphite_gear_mold"
+    },
+    {
+      "amount": 360,
+      "fluid": "createmetallurgy:molten_silver",
+      "nbt": {}
+    }
+  ],
+  "processingTime": 240,
+  "result": {
+    "tag": "c:gears/silver"
+  }
+}

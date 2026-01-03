@@ -52,21 +52,19 @@ import java.util.function.Supplier;
 @SuppressWarnings("unused")
 public class CreateMetallurgyJEI implements IModPlugin {
 
-    private static final ResourceLocation ID = CreateMetallurgy.genRL("jei_plugin");
+    private static final ResourceLocation ID = CreateMetallurgy.asResource("jei_plugin");
 
     @Override
     public ResourceLocation getPluginUid() {
         return ID;
     }
 
-
     private final List<CreateRecipeCategory<?>> allCategories = new ArrayList<>();
 
     private void loadCategories() {
         allCategories.clear();
 
-        CreateRecipeCategory<?>
-                melting = builder(FoundryBasinRecipe.class)
+        CreateRecipeCategory<?> melting = builder(FoundryBasinRecipe.class)
                 .addTypedRecipes(CMRecipeTypes.MELTING).catalyst(CMBlocks.FOUNDRY_LID_BLOCK::get)
                 .catalyst(CMBlocks.FOUNDRY_BASIN_BLOCK::get)
                 .doubleItemIcon(CMBlocks.FOUNDRY_BASIN_BLOCK.get(), CMBlocks.FOUNDRY_LID_BLOCK.get())
@@ -133,8 +131,10 @@ public class CreateMetallurgyJEI implements IModPlugin {
     }
 
     @Override
+    @SuppressWarnings("removal") // JEI API deprecation - will need to update when JEI provides replacement
     public void registerIngredients(IModIngredientRegistration registration) {
-        registration.register(CMJeiTypes.ENTITY_STACK, Collections.emptyList(), new EntityIngredientHelper(), new EntityIngredientRenderer(1));
+        registration.register(CMJeiTypes.ENTITY_STACK, Collections.emptyList(), new EntityIngredientHelper(),
+                new EntityIngredientRenderer(1));
     }
 
     @Override
@@ -153,7 +153,7 @@ public class CreateMetallurgyJEI implements IModPlugin {
         allCategories.forEach(c -> c.registerCatalysts(registration));
     }
 
-    //------------------------------------------------------------------------------------------------------------------
+    // ------------------------------------------------------------------------------------------------------------------
 
     private class CategoryBuilder<T extends Recipe<?>> {
         private final Class<? extends T> recipeClass;
@@ -174,12 +174,23 @@ public class CreateMetallurgyJEI implements IModPlugin {
             return this;
         }
 
+        private T castRecipe(Recipe<?> recipe) {
+            if (!recipeClass.isInstance(recipe)) {
+                throw new ClassCastException("Recipe " + recipe.getClass() + " is not an instance of " + recipeClass);
+            }
+            return recipeClass.cast(recipe);
+        }
+
         public CategoryBuilder<T> addTypedRecipes(IRecipeTypeInfo recipeTypeEntry) {
-            return addTypedRecipes(recipeTypeEntry::getType);
+            RecipeType<?> recipeType = recipeTypeEntry.getType();
+            Consumer<List<T>> consumer = recipes -> CreateJEI
+                    .<T>consumeTypedRecipes(holder -> recipes.add(castRecipe(holder.value())), recipeType);
+            return addRecipeListConsumer(consumer);
         }
 
         public CategoryBuilder<T> addTypedRecipes(Supplier<RecipeType<? extends T>> recipeType) {
-            return addRecipeListConsumer(recipes -> CreateJEI.<T>consumeTypedRecipes(recipes::add, recipeType.get()));
+            return addRecipeListConsumer(recipes -> CreateJEI
+                    .<T>consumeTypedRecipes(holder -> recipes.add(castRecipe(holder.value())), recipeType.get()));
         }
 
         public CategoryBuilder<T> catalystStack(Supplier<ItemStack> supplier) {
@@ -230,9 +241,15 @@ public class CreateMetallurgyJEI implements IModPlugin {
                 recipesSupplier = () -> Collections.emptyList();
             }
 
-            CreateRecipeCategory.Info<T> info = new CreateRecipeCategory.Info<>(
-                    new mezz.jei.api.recipe.RecipeType<>(CreateMetallurgy.genRL(name), recipeClass),
-                    Component.translatable(CreateMetallurgy.MOD_ID + ".recipe." + name), background, icon, recipesSupplier, catalysts);
+            mezz.jei.api.recipe.RecipeType<T> recipeType = new mezz.jei.api.recipe.RecipeType<T>(
+                    CreateMetallurgy.asResource(name), recipeClass);
+            net.minecraft.network.chat.MutableComponent title = Component
+                    .translatable(CreateMetallurgy.MOD_ID + ".recipe." + name);
+            // Create 6.0 Info constructor - constructor call requires raw type due to API
+            // limitations
+            @SuppressWarnings({ "unchecked", "rawtypes" })
+            CreateRecipeCategory.Info<T> info = (CreateRecipeCategory.Info<T>) new CreateRecipeCategory.Info(
+                    recipeType, title, background, icon, recipesSupplier, catalysts);
             CreateRecipeCategory<T> category = factory.create(info);
             allCategories.add(category);
             return category;

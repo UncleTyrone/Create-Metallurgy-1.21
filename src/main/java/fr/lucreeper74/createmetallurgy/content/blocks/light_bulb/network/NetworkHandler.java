@@ -1,5 +1,6 @@
 package fr.lucreeper74.createmetallurgy.content.blocks.light_bulb.network;
 
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
@@ -27,7 +28,7 @@ public class NetworkHandler {
         public static Address of(ItemStack stack) {
             if (stack.isEmpty())
                 return EMPTY;
-            if (!stack.hasTag())
+            if (!stack.has(DataComponents.CUSTOM_DATA))
                 return addresses.computeIfAbsent(stack.getItem(), $ -> new Address(stack));
             return new Address(stack);
         }

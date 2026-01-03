@@ -1,5 +1,6 @@
 package fr.lucreeper74.createmetallurgy.registries;
 
+import com.simibubi.create.foundation.data.CreateRegistrate;
 import com.tterrag.registrate.util.entry.*;
 import fr.lucreeper74.createmetallurgy.CreateMetallurgy;
 import fr.lucreeper74.createmetallurgy.content.blocks.light_bulb.LightBulbBlock;
@@ -11,10 +12,11 @@ import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.*;
+import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.level.block.Block;
-import net.minecraftforge.eventbus.api.IEventBus;
-import net.minecraftforge.registries.DeferredRegister;
-import net.minecraftforge.registries.RegistryObject;
+import net.neoforged.bus.api.IEventBus;
+import net.neoforged.neoforge.registries.DeferredHolder;
+import net.neoforged.neoforge.registries.DeferredRegister;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -26,15 +28,22 @@ import java.util.function.Predicate;
 import static net.minecraft.core.registries.Registries.CREATIVE_MODE_TAB;
 
 public class CMCreativeTabs {
-    private static final DeferredRegister<CreativeModeTab> REGISTER =
-            DeferredRegister.create(CREATIVE_MODE_TAB, CreateMetallurgy.MOD_ID);
+    private static final DeferredRegister<CreativeModeTab> REGISTER = DeferredRegister.create(CREATIVE_MODE_TAB,
+            CreateMetallurgy.MOD_ID);
 
-    public static final RegistryObject<CreativeModeTab> MAIN_CREATIVE_TAB = REGISTER.register("main_group",
+    public static final DeferredHolder<CreativeModeTab, CreativeModeTab> MAIN_CREATIVE_TAB = REGISTER.register(
+            "main_group",
             () -> CreativeModeTab.builder()
                     .title(Component.translatable("itemGroup." + CreateMetallurgy.MOD_ID + ".main_group"))
                     .icon(CMItems.OBDURIUM_INGOT::asStack)
-                    .displayItems(new RegistrateDisplayItemsGenerator())
+                    .displayItems(createDisplayItemsGenerator())
                     .build());
+
+    private static RegistrateDisplayItemsGenerator createDisplayItemsGenerator() {
+        // Use a supplier pattern to avoid forward reference issues
+        // The tab will be available when the generator actually runs
+        return new RegistrateDisplayItemsGenerator(() -> CMCreativeTabs.MAIN_CREATIVE_TAB);
+    }
 
     public static void register(IEventBus modEventBus) {
         REGISTER.register(modEventBus);
@@ -42,9 +51,26 @@ public class CMCreativeTabs {
 
     public static class RegistrateDisplayItemsGenerator implements CreativeModeTab.DisplayItemsGenerator {
 
+        private final java.util.function.Supplier<DeferredHolder<CreativeModeTab, CreativeModeTab>> tabFilterSupplier;
+
+        public RegistrateDisplayItemsGenerator(
+                java.util.function.Supplier<DeferredHolder<CreativeModeTab, CreativeModeTab>> tabFilterSupplier) {
+            this.tabFilterSupplier = tabFilterSupplier;
+        }
+
+        private DeferredHolder<CreativeModeTab, CreativeModeTab> getTabFilter() {
+            return tabFilterSupplier.get();
+        }
+
         private List<Item> collectBlocks(Predicate<Item> exclusionPredicate) {
             List<Item> items = new ReferenceArrayList<>();
-            for (RegistryEntry<Block> entry : CreateMetallurgy.REGISTRATE.getAll(Registries.BLOCK)) {
+            for (RegistryEntry<Block, Block> entry : CreateMetallurgy.REGISTRATE.getAll(Registries.BLOCK)) {
+                // Only add items that are assigned to our creative tab (or null, meaning
+                // default)
+                // This prevents duplicates when Registrate's event listener also tries to add
+                // items
+                if (!CreateRegistrate.isInCreativeTab(entry, getTabFilter()))
+                    continue;
                 Item item = entry.get()
                         .asItem();
                 if (item == Items.AIR)
@@ -59,7 +85,13 @@ public class CMCreativeTabs {
         private List<Item> collectItems(Predicate<Item> exclusionPredicate) {
             List<Item> items = new ReferenceArrayList<>();
 
-            for (RegistryEntry<Item> entry : CreateMetallurgy.REGISTRATE.getAll(Registries.ITEM)) {
+            for (RegistryEntry<Item, Item> entry : CreateMetallurgy.REGISTRATE.getAll(Registries.ITEM)) {
+                // Only add items that are assigned to our creative tab (or null, meaning
+                // default)
+                // This prevents duplicates when Registrate's event listener also tries to add
+                // items
+                if (!CreateRegistrate.isInCreativeTab(entry, getTabFilter()))
+                    continue;
                 Item item = entry.get();
                 if (item instanceof BlockItem)
                     continue;
@@ -69,7 +101,8 @@ public class CMCreativeTabs {
             return items;
         }
 
-        private static void outputAll(CreativeModeTab.Output output, List<Item> items, Function<Item, CreativeModeTab.TabVisibility> visibilityFunc) {
+        private static void outputAll(CreativeModeTab.Output output, List<Item> items,
+                Function<Item, CreativeModeTab.TabVisibility> visibilityFunc) {
             for (Item item : items) {
                 output.accept(item, visibilityFunc.apply(item));
             }
@@ -97,15 +130,14 @@ public class CMCreativeTabs {
         private static Predicate<Item> makeExclusionPredicate() {
             Set<Item> exclusions = new ReferenceOpenHashSet<>();
 
-            List<ItemProviderEntry<?>> simpleExclusions = List.of(
-                    CMItems.INCOMPLETE_INDUSTRIAL_CRUCIBLE
-            );
+            List<ItemProviderEntry<?, ?>> simpleExclusions = List.of(
+                    CMItems.INCOMPLETE_INDUSTRIAL_CRUCIBLE);
 
             List<TagDependentBucketItem> tagDependentExclusions = CMFluids.ALL_MODDED_FLUIDS.stream()
                     .map(entry -> (TagDependentBucketItem) entry.getBucket().get())
                     .toList();
 
-            for (ItemProviderEntry<?> entry : simpleExclusions) {
+            for (ItemProviderEntry<?, ?> entry : simpleExclusions) {
                 exclusions.add(entry.asItem());
             }
 

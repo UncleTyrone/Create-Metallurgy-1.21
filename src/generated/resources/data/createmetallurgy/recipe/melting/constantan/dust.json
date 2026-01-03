@@ -1,0 +1,26 @@
+{
+  "id": "createmetallurgy:melting/constantan/dust",
+  "type": "createmetallurgy:melting",
+  "conditions": [
+    {
+      "type": "neoforge:not",
+      "value": {
+        "type": "neoforge:tag_empty",
+        "tag": "c:dusts/constantan"
+      }
+    }
+  ],
+  "heatRequirement": "heated",
+  "ingredients": [
+    {
+      "tag": "c:dusts/constantan"
+    }
+  ],
+  "processingTime": 20,
+  "results": [
+    {
+      "amount": 90,
+      "fluid": "createmetallurgy:molten_constantan"
+    }
+  ]
+}

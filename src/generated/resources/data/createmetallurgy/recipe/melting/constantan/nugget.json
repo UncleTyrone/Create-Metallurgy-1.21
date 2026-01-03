@@ -1,0 +1,26 @@
+{
+  "id": "createmetallurgy:melting/constantan/nugget",
+  "type": "createmetallurgy:melting",
+  "conditions": [
+    {
+      "type": "neoforge:not",
+      "value": {
+        "type": "neoforge:tag_empty",
+        "tag": "c:nuggets/constantan"
+      }
+    }
+  ],
+  "heatRequirement": "heated",
+  "ingredients": [
+    {
+      "tag": "c:nuggets/constantan"
+    }
+  ],
+  "processingTime": 4,
+  "results": [
+    {
+      "amount": 10,
+      "fluid": "createmetallurgy:molten_constantan"
+    }
+  ]
+}

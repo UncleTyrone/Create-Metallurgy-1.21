@@ -1,0 +1,18 @@
+{
+  "id": "createmetallurgy:crafting/content/foundry_lid",
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "A": {
+      "item": "create:andesite_alloy"
+    }
+  },
+  "pattern": [
+    "AAA",
+    "A A"
+  ],
+  "result": {
+    "id": "createmetallurgy:foundry_lid"
+  },
+  "show_notification": true
+}

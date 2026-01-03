@@ -1,0 +1,26 @@
+{
+  "id": "createmetallurgy:melting/tungsten/dust",
+  "type": "createmetallurgy:melting",
+  "conditions": [
+    {
+      "type": "neoforge:not",
+      "value": {
+        "type": "neoforge:tag_empty",
+        "tag": "c:dusts/tungsten"
+      }
+    }
+  ],
+  "heatRequirement": "superheated",
+  "ingredients": [
+    {
+      "tag": "c:dusts/tungsten"
+    }
+  ],
+  "processingTime": 20,
+  "results": [
+    {
+      "amount": 90,
+      "fluid": "createmetallurgy:molten_tungsten"
+    }
+  ]
+}

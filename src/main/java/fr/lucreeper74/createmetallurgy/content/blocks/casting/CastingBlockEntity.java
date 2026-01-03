@@ -18,9 +18,10 @@ import net.createmod.catnip.math.VecHelper;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.util.RandomSource;
-import net.minecraft.world.Container;
+import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.level.Level;
@@ -28,16 +29,11 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
-import net.minecraftforge.common.capabilities.Capability;
-import net.minecraftforge.common.capabilities.ForgeCapabilities;
-import net.minecraftforge.common.util.LazyOptional;
-import net.minecraftforge.fluids.FluidStack;
-import net.minecraftforge.fluids.capability.IFluidHandler;
-import net.minecraftforge.fluids.capability.templates.FluidTank;
-import net.minecraftforge.items.IItemHandlerModifiable;
-import net.minecraftforge.items.wrapper.CombinedInvWrapper;
+import net.neoforged.neoforge.fluids.FluidStack;
+import net.neoforged.neoforge.fluids.capability.IFluidHandler;
+import net.neoforged.neoforge.items.IItemHandlerModifiable;
+import net.neoforged.neoforge.items.wrapper.CombinedInvWrapper;
 
-import javax.annotation.Nonnull;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -45,9 +41,8 @@ import java.util.stream.Collectors;
 public abstract class CastingBlockEntity extends SmartBlockEntity implements IHaveGoggleInformation {
 
     protected ScrollOptionBehaviour<LockMode> lockSelect;
-    public LazyOptional<IItemHandlerModifiable> itemCapability;
+    public IItemHandlerModifiable itemCapability;
     public CastingFluidTank inputTank;
-    private final LazyOptional<CastingFluidTank> fluidCapability;
     public SmartInventory inv;
     public SmartInventory moldInv;
     protected CastingRecipe currentRecipe;
@@ -65,9 +60,8 @@ public abstract class CastingBlockEntity extends SmartBlockEntity implements IHa
         super(type, pos, state);
         inv = new SmartInventory(1, this, 1, true).forbidInsertion();
         moldInv = new SmartInventory(1, this, 1, true);
-        itemCapability = LazyOptional.of(() -> new CombinedInvWrapper(inv, moldInv));
-        fluidCapability = LazyOptional.of(() -> inputTank);
         inputTank = new CastingFluidTank(this);
+        itemCapability = new CombinedInvWrapper(inv, moldInv);
         fluidBuffer = FluidStack.EMPTY;
         lastOutput = ItemStack.EMPTY;
     }
@@ -90,43 +84,37 @@ public abstract class CastingBlockEntity extends SmartBlockEntity implements IHa
     }
 
     @Override
-    public void write(CompoundTag compound, boolean clientPacket) {
-        super.write(compound, clientPacket);
-        compound.put("moldInv", moldInv.serializeNBT());
-        compound.put("inv", inv.serializeNBT());
-        compound.put("inputTank", inputTank.writeToNBT(new CompoundTag()));
-        compound.put("fluidBuffer", fluidBuffer.writeToNBT(new CompoundTag()));
-        compound.put("lastOutput", lastOutput.serializeNBT());
+    public void write(CompoundTag compound, HolderLookup.Provider registries, boolean clientPacket) {
+        super.write(compound, registries, clientPacket);
+        compound.put("moldInv", moldInv.serializeNBT(registries));
+        compound.put("inv", inv.serializeNBT(registries));
+        compound.put("inputTank", inputTank.writeToNBT(new CompoundTag(), registries));
+        compound.put("fluidBuffer", fluidBuffer.saveOptional(registries));
+        compound.put("lastOutput", lastOutput.saveOptional(registries));
         compound.putInt("castingTime", processingTick);
         compound.putInt("totalTime", processingTick);
         compound.putBoolean("running", running);
     }
 
     @Override
-    protected void read(CompoundTag compound, boolean clientPacket) {
-        super.read(compound, clientPacket);
-        moldInv.deserializeNBT(compound.getCompound("moldInv"));
-        inv.deserializeNBT(compound.getCompound("inv"));
-        inputTank.readFromNBT(compound.getCompound("inputTank"), clientPacket);
-        fluidBuffer = FluidStack.loadFluidStackFromNBT(compound.getCompound("fluidBuffer"));
-        lastOutput = ItemStack.of(compound.getCompound("lastOutput"));
+    protected void read(CompoundTag compound, HolderLookup.Provider registries, boolean clientPacket) {
+        super.read(compound, registries, clientPacket);
+        moldInv.deserializeNBT(registries, compound.getCompound("moldInv"));
+        inv.deserializeNBT(registries, compound.getCompound("inv"));
+        inputTank.readFromNBT(compound.getCompound("inputTank"), registries, clientPacket);
+        fluidBuffer = FluidStack.parseOptional(registries, compound.getCompound("fluidBuffer"));
+        lastOutput = ItemStack.parseOptional(registries, compound.getCompound("lastOutput"));
         processingTick = compound.getInt("castingTime");
         totalProcessTicks = compound.getInt("totalTime");
         running = compound.getBoolean("running");
     }
 
-    public void readOnlyItems(CompoundTag compound) {
-        inv.deserializeNBT(compound.getCompound("inv"));
+    public void readOnlyItems(CompoundTag compound, HolderLookup.Provider registries) {
+        inv.deserializeNBT(registries, compound.getCompound("inv"));
     }
 
-    @Nonnull
-    @Override
-    public <T> LazyOptional<T> getCapability(@Nonnull Capability<T> cap, Direction side) {
-        if (cap == ForgeCapabilities.ITEM_HANDLER)
-            return itemCapability.cast();
-        if (cap == ForgeCapabilities.FLUID_HANDLER)
-            return fluidCapability.cast();
-        return super.getCapability(cap, side);
+    public IFluidHandler getFluidHandler() {
+        return inputTank;
     }
 
     @Override
@@ -196,7 +184,9 @@ public abstract class CastingBlockEntity extends SmartBlockEntity implements IHa
     public void process() {
         FluidStack fluidInTank = getFluidTank().getFluidInTank(0);
         inv.setStackInSlot(0, currentRecipe.getResultItem(getLevel().registryAccess()).copy());
-        fluidInTank.shrink(currentRecipe.getFluidIngredient().getRequiredAmount());
+        if (currentRecipe.hasFluidIngredient()) {
+            fluidInTank.shrink(currentRecipe.getFluidIngredient().amount());
+        }
 
         if (currentRecipe.isMoldConsumed())
             moldInv.setStackInSlot(0, ItemStack.EMPTY);
@@ -224,7 +214,7 @@ public abstract class CastingBlockEntity extends SmartBlockEntity implements IHa
     }
 
     public IFluidHandler getFluidTank() {
-        return getCapability(ForgeCapabilities.FLUID_HANDLER).orElse(new FluidTank(1));
+        return inputTank;
     }
 
     public static boolean isInAirCurrent(Level level, BlockPos pos, BlockEntity be) {
@@ -241,22 +231,24 @@ public abstract class CastingBlockEntity extends SmartBlockEntity implements IHa
                     BlockEntity facingBe = level.getBlockEntity(nearbyPos.relative(facing, i));
                     float flowDist = fanBe.airCurrent.maxDistance;
 
-                    if (be == facingBe && flowDist != 0 && flowDist >= i - 1) return true;
+                    if (be == facingBe && flowDist != 0 && flowDist >= i - 1)
+                        return true;
                 }
             }
         }
         return false;
     }
 
-    protected <C extends Container> boolean matchCastingRecipe(Recipe<C> recipe) {
+    protected boolean matchCastingRecipe(Recipe<?> recipe) {
         if (recipe == null || !inv.getStackInSlot(0).isEmpty())
             return false;
         return CastingRecipe.match(this, recipe);
     }
 
     public List<Recipe<?>> getMatchingRecipes() {
-        List<Recipe<?>> list = RecipeFinder.get(getRecipeCacheKey(), level, this::matchStaticFilters);
-        return list.stream()
+        List<RecipeHolder<?>> holders = RecipeFinder.get(getRecipeCacheKey(), level, this::matchStaticFilters);
+        return holders.stream()
+                .map(RecipeHolder::value)
                 .filter(this::matchCastingRecipe)
                 .sorted(Comparator.comparingInt(r -> r.getIngredients()
                         .size()))
@@ -280,7 +272,7 @@ public abstract class CastingBlockEntity extends SmartBlockEntity implements IHa
             sendData();
         }
 
-        return recipe.getFluidIngredient().getRequiredAmount();
+        return recipe.hasFluidIngredient() ? recipe.getFluidIngredient().amount() : 0;
     }
 
     public void reset() {
@@ -298,7 +290,7 @@ public abstract class CastingBlockEntity extends SmartBlockEntity implements IHa
 
     protected abstract void playProcessSound();
 
-    protected abstract <C extends Container> boolean matchStaticFilters(Recipe<C> recipe);
+    protected abstract boolean matchStaticFilters(RecipeHolder<?> recipe);
 
     protected abstract Object getRecipeCacheKey();
 

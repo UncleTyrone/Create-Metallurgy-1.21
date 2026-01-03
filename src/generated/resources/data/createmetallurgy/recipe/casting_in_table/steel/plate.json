@@ -1,0 +1,27 @@
+{
+  "id": "createmetallurgy:casting_in_table/steel/plate",
+  "type": "createmetallurgy:casting_in_table",
+  "conditions": [
+    {
+      "type": "neoforge:not",
+      "value": {
+        "type": "neoforge:tag_empty",
+        "tag": "c:plates/steel"
+      }
+    }
+  ],
+  "ingredients": [
+    {
+      "item": "createmetallurgy:graphite_plate_mold"
+    },
+    {
+      "amount": 90,
+      "fluid": "createmetallurgy:molten_steel",
+      "nbt": {}
+    }
+  ],
+  "processingTime": 60,
+  "result": {
+    "tag": "c:plates/steel"
+  }
+}

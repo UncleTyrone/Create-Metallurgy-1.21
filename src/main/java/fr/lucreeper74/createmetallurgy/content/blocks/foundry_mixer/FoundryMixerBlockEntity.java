@@ -10,8 +10,9 @@ import net.createmod.catnip.math.VecHelper;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.particles.ParticleOptions;
-import net.minecraft.world.Container;
 import net.minecraft.world.item.crafting.Recipe;
+import net.minecraft.world.item.crafting.RecipeHolder;
+import net.minecraft.world.item.crafting.RecipeInput;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
@@ -27,8 +28,8 @@ public class FoundryMixerBlockEntity extends MechanicalMixerBlockEntity {
     }
 
     @Override
-    protected <C extends Container> boolean matchStaticFilters(Recipe<C> recipe) {
-        return recipe.getType() == CMRecipeTypes.ALLOYING.getType();
+    protected boolean matchStaticFilters(RecipeHolder<? extends Recipe<?>> recipe) {
+        return recipe.value().getType() == CMRecipeTypes.ALLOYING.getType();
     }
 
     @Override
@@ -42,12 +43,15 @@ public class FoundryMixerBlockEntity extends MechanicalMixerBlockEntity {
         }
     }
 
-    @Override
-    protected <C extends Container> boolean matchBasinRecipe(Recipe<C> recipe) {
+    // Note: matchBasinRecipe signature changed in Create 6.0 - using RecipeInput
+    // instead of Container
+    protected <I extends RecipeInput> boolean matchBasinRecipe(Recipe<I> recipe) {
         if (recipe == null)
             return false;
         Optional<BasinBlockEntity> basin = getBasin();
-        return basin.filter(basinBlockEntity -> FoundryBasinRecipe.match((FoundryBasinBlockEntity) basinBlockEntity, recipe)).isPresent();
+        return basin.filter(
+                basinBlockEntity -> FoundryBasinRecipe.match((FoundryBasinBlockEntity) basinBlockEntity, recipe))
+                .isPresent();
     }
 
     @Override

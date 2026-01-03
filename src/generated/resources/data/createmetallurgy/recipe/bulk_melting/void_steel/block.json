@@ -1,0 +1,27 @@
+{
+  "id": "createmetallurgy:bulk_melting/void_steel/block",
+  "type": "createmetallurgy:bulk_melting",
+  "conditions": [
+    {
+      "type": "neoforge:not",
+      "value": {
+        "type": "neoforge:tag_empty",
+        "tag": "c:storage_blocks/void_steel"
+      }
+    }
+  ],
+  "ingredients": [
+    {
+      "tag": "c:storage_blocks/void_steel"
+    }
+  ],
+  "maxHeatRequirement": 50,
+  "minHeatRequirement": 18,
+  "processingTime": 224,
+  "results": [
+    {
+      "amount": 810,
+      "fluid": "createmetallurgy:molten_void_steel"
+    }
+  ]
+}

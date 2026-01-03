@@ -1,0 +1,15 @@
+{
+  "id": "createmetallurgy:casting_in_basin/obdurium/block",
+  "type": "createmetallurgy:casting_in_basin",
+  "ingredients": [
+    {
+      "amount": 810,
+      "fluid": "createmetallurgy:molten_obdurium",
+      "nbt": {}
+    }
+  ],
+  "processingTime": 480,
+  "result": {
+    "id": "createmetallurgy:obdurium_block"
+  }
+}

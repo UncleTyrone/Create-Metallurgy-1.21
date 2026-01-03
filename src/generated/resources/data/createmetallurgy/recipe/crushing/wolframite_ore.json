@@ -1,0 +1,23 @@
+{
+  "id": "createmetallurgy:crushing/wolframite_ore",
+  "type": "create:crushing",
+  "ingredients": [
+    {
+      "item": "createmetallurgy:wolframite_ore"
+    }
+  ],
+  "processingTime": 350,
+  "results": [
+    {
+      "id": "createmetallurgy:crushed_raw_tungsten"
+    },
+    {
+      "chance": 0.75,
+      "id": "create:experience_nugget"
+    },
+    {
+      "chance": 0.125,
+      "id": "minecraft:netherrack"
+    }
+  ]
+}

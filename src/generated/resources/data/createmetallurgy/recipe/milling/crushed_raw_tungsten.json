@@ -1,0 +1,19 @@
+{
+  "id": "createmetallurgy:milling/crushed_raw_tungsten",
+  "type": "create:milling",
+  "ingredients": [
+    {
+      "item": "createmetallurgy:crushed_raw_tungsten"
+    }
+  ],
+  "processingTime": 150,
+  "results": [
+    {
+      "id": "createmetallurgy:dirty_tungsten_dust"
+    },
+    {
+      "chance": 0.25,
+      "id": "createmetallurgy:dirty_tungsten_dust"
+    }
+  ]
+}

@@ -11,29 +11,28 @@ import java.util.Random;
 public class LadleStyles {
 
     public static ResourceLocation getStyleId(PackageStyle style) {
-        return CreateMetallurgy.genRL(style.type());
+        return CreateMetallurgy.asResource(style.type());
     }
 
     public static ResourceLocation getHandleModel() {
-        return CreateMetallurgy.genRL("item/ladle/handle");
+        return CreateMetallurgy.asResource("item/ladle/handle");
     }
 
-    public static final List<PackageStyle> STANDARD_LADLES_STYLES =  ImmutableList.of(
-            new PackageStyle("ghast", 12, 12, 23f, false),  // Credit: Aaby
-            new PackageStyle("cute", 12, 12, 23f, false),   // Credit: RestingPhantom
-            new PackageStyle("old", 12, 12, 23f, false),    // Credit: Aaby
-            new PackageStyle("strider", 12, 12, 23f, false)
-    );
+    public static final List<PackageStyle> STANDARD_LADLES_STYLES = ImmutableList.of(
+            new PackageStyle("ghast", 12, 12, 23f, false), // Credit: Aaby
+            new PackageStyle("cute", 12, 12, 23f, false), // Credit: RestingPhantom
+            new PackageStyle("old", 12, 12, 23f, false), // Credit: Aaby
+            new PackageStyle("strider", 12, 12, 23f, false));
 
     public static final List<PackageStyle> RARE_LADLES_STYLES = ImmutableList.of(
             community("restingphantom"),
-            community("the_cooler")   // Credit: RestingPhantom
+            community("the_cooler") // Credit: RestingPhantom
     );
 
-    public static final List<PackageStyle> ALL_STYLES = ImmutableList.<PackageStyle> builder()
-                    .addAll(STANDARD_LADLES_STYLES)
-                    .addAll(RARE_LADLES_STYLES)
-                    .build();
+    public static final List<PackageStyle> ALL_STYLES = ImmutableList.<PackageStyle>builder()
+            .addAll(STANDARD_LADLES_STYLES)
+            .addAll(RARE_LADLES_STYLES)
+            .build();
 
     private static final Random STYLE_PICKER = new Random();
     private static final int RARE_CHANCE = 1000;

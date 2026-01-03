@@ -1,0 +1,17 @@
+{
+  "id": "createmetallurgy:entity_melting/piglin_brute",
+  "type": "createmetallurgy:entity_melting",
+  "entity": {
+    "type": "minecraft:piglin_brute",
+    "damage": 4
+  },
+  "ingredients": [],
+  "maxHeatRequirement": 50,
+  "minHeatRequirement": 6,
+  "results": [
+    {
+      "amount": 20,
+      "fluid": "createmetallurgy:molten_gold"
+    }
+  ]
+}

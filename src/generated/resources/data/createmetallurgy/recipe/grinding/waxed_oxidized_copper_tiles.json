@@ -1,0 +1,15 @@
+{
+  "id": "createmetallurgy:grinding/waxed_oxidized_copper_tiles",
+  "type": "createmetallurgy:grinding",
+  "ingredients": [
+    {
+      "item": "create:waxed_oxidized_copper_tiles"
+    }
+  ],
+  "processingTime": 50,
+  "results": [
+    {
+      "id": "create:oxidized_copper_tiles"
+    }
+  ]
+}

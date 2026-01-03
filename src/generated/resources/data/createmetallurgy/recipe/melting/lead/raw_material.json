@@ -1,0 +1,30 @@
+{
+  "id": "createmetallurgy:melting/lead/raw_material",
+  "type": "createmetallurgy:melting",
+  "conditions": [
+    {
+      "type": "neoforge:not",
+      "value": {
+        "type": "neoforge:tag_empty",
+        "tag": "c:raw_materials/lead"
+      }
+    }
+  ],
+  "heatRequirement": "heated",
+  "ingredients": [
+    {
+      "tag": "c:raw_materials/lead"
+    }
+  ],
+  "processingTime": 40,
+  "results": [
+    {
+      "amount": 90,
+      "fluid": "createmetallurgy:molten_lead"
+    },
+    {
+      "amount": 45,
+      "fluid": "createmetallurgy:molten_slag"
+    }
+  ]
+}

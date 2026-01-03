@@ -1,59 +1,57 @@
 package fr.lucreeper74.createmetallurgy.content.items.ladle_filter;
 
-import com.simibubi.create.foundation.networking.SimplePacketBase;
+import fr.lucreeper74.createmetallurgy.CreateMetallurgy;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.ByteBufCodecs;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraftforge.fluids.FluidStack;
-import net.minecraftforge.network.NetworkEvent;
+import net.neoforged.neoforge.fluids.FluidStack;
+import net.neoforged.neoforge.network.handling.IPayloadContext;
 
-public class LadleFilterScreenPacket extends SimplePacketBase {
+public record LadleFilterScreenPacket(Type packetType, CompoundTag data) implements CustomPacketPayload {
 
     public enum Type {
         UPDATE_ADDRESS, UPDATE_PERCENT, UPDATE_FLUID
     }
 
-    private final Type type;
-    private final CompoundTag NBTdata;
+    public static final CustomPacketPayload.Type<LadleFilterScreenPacket> TYPE = new CustomPacketPayload.Type<>(
+            CreateMetallurgy.asResource("ladle_filter_screen"));
 
-    public LadleFilterScreenPacket(FriendlyByteBuf buffer) {
-        type = Type.values()[buffer.readInt()];
-        NBTdata = buffer.readNbt();
-    }
-
-    public LadleFilterScreenPacket(Type type, CompoundTag data) {
-        this.type = type;
-        this.NBTdata = data;
-    }
+    public static final StreamCodec<RegistryFriendlyByteBuf, LadleFilterScreenPacket> STREAM_CODEC = StreamCodec
+            .composite(
+                    ByteBufCodecs.VAR_INT.<RegistryFriendlyByteBuf>cast().map(i -> Type.values()[i], Type::ordinal),
+                    LadleFilterScreenPacket::packetType,
+                    ByteBufCodecs.COMPOUND_TAG.<RegistryFriendlyByteBuf>cast(),
+                    LadleFilterScreenPacket::data,
+                    LadleFilterScreenPacket::new);
 
     @Override
-    public void write(FriendlyByteBuf buffer) {
-        buffer.writeInt(type.ordinal());
-        buffer.writeNbt(NBTdata);
+    public CustomPacketPayload.Type<? extends CustomPacketPayload> type() {
+        return TYPE;
     }
 
-    @Override
-    public boolean handle(NetworkEvent.Context context) {
+    public static void handle(LadleFilterScreenPacket packet, IPayloadContext context) {
         context.enqueueWork(() -> {
-            ServerPlayer player = context.getSender();
-            if (player == null)
+            if (!(context.player() instanceof ServerPlayer player))
                 return;
 
             if (player.containerMenu instanceof LadleFilterMenu menu) {
-                switch (type) {
-                    case UPDATE_ADDRESS:
-                        menu.address = NBTdata.getString("Address");
-                        break;
-                    case UPDATE_PERCENT:
-                        menu.filledAmount = NBTdata.getInt("FilledAmount");
-                        menu.comparator = NBTdata.getInt("Comparator");
-                        break;
-                    case UPDATE_FLUID:
-                        menu.fluidFilter = FluidStack.loadFluidStackFromNBT(NBTdata.getCompound("FluidFilter"));
-                        break;
+                switch (packet.packetType()) {
+                    case UPDATE_ADDRESS -> {
+                        menu.address = packet.data().getString("Address");
+                    }
+                    case UPDATE_PERCENT -> {
+                        menu.filledAmount = packet.data().getInt("FilledAmount");
+                        menu.comparator = packet.data().getInt("Comparator");
+                    }
+                    case UPDATE_FLUID -> {
+                        menu.fluidFilter = FluidStack.parseOptional(player.registryAccess(),
+                                packet.data().getCompound("FluidFilter"));
+                    }
                 }
             }
         });
-        return true;
     }
 }

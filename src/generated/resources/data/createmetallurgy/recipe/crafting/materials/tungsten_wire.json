@@ -1,0 +1,17 @@
+{
+  "id": "createmetallurgy:crafting/materials/tungsten_wire",
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "tag": "c:ingots/tungsten"
+    },
+    {
+      "item": "minecraft:shears"
+    }
+  ],
+  "result": {
+    "count": 2,
+    "id": "createmetallurgy:tungsten_wire"
+  }
+}

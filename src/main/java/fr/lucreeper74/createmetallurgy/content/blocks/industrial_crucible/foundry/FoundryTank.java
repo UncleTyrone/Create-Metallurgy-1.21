@@ -1,27 +1,28 @@
 package fr.lucreeper74.createmetallurgy.content.blocks.industrial_crucible.foundry;
 
 import com.simibubi.create.content.processing.recipe.ProcessingRecipe;
-import com.simibubi.create.foundation.fluid.FluidIngredient;
+import net.neoforged.neoforge.fluids.crafting.SizedFluidIngredient;
 import com.simibubi.create.foundation.recipe.RecipeConditions;
 import com.simibubi.create.foundation.recipe.RecipeFinder;
 import fr.lucreeper74.createmetallurgy.content.blocks.industrial_crucible.CrucibleBlockEntity;
 import fr.lucreeper74.createmetallurgy.content.blocks.industrial_crucible.foundry.recipes.FoundryRecipe;
 import fr.lucreeper74.createmetallurgy.registries.CMRecipeTypes;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.NbtOps;
 import net.minecraft.nbt.Tag;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Ingredient;
-import net.minecraft.world.item.crafting.Recipe;
+import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.level.Level;
-import net.minecraftforge.fluids.FluidStack;
-import net.minecraftforge.fluids.capability.IFluidHandler;
+import net.neoforged.neoforge.fluids.FluidStack;
+import net.neoforged.neoforge.fluids.capability.IFluidHandler;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
-import java.util.function.Predicate;
 
 public class FoundryTank implements IFluidHandler {
 
@@ -31,7 +32,7 @@ public class FoundryTank implements IFluidHandler {
     protected Consumer<FluidStack> updateCallback;
 
     // For recipes
-    private ProcessingRecipe<?> currentRecipe;
+    private ProcessingRecipe<?, ?> currentRecipe;
     public int processingTime;
 
     public FoundryTank(CrucibleBlockEntity be, int capacity, Consumer<FluidStack> updateCallback) {
@@ -99,7 +100,7 @@ public class FoundryTank implements IFluidHandler {
             return filled;
 
         for (FluidStack fluid : fluids) {
-            if (fluid.isFluidEqual(resource)) {
+            if (FluidStack.isSameFluidSameComponents(fluid, resource)) {
                 fluid.grow(filled);
                 updateCallback.accept(fluid);
                 return filled;
@@ -121,7 +122,7 @@ public class FoundryTank implements IFluidHandler {
             return FluidStack.EMPTY;
 
         for (FluidStack fluid : fluids)
-            if (fluid.isFluidEqual(resource))
+            if (FluidStack.isSameFluidSameComponents(fluid, resource))
                 return drain(fluid, resource.getAmount(), action);
 
         // No fluid matching
@@ -143,7 +144,7 @@ public class FoundryTank implements IFluidHandler {
         if (resource.getAmount() < drained)
             drained = resource.getAmount();
 
-        FluidStack stack = new FluidStack(resource, drained);
+        FluidStack stack = resource.copyWithAmount(drained);
         if (action.execute() && drained > 0) {
             resource.shrink(drained);
 
@@ -163,17 +164,17 @@ public class FoundryTank implements IFluidHandler {
     }
 
     public void process() {
-        ProcessingRecipe<?> recipe = getMatchingRecipe();
+        ProcessingRecipe<?, ?> recipe = getMatchingRecipe();
         if (recipe != null) {
             currentRecipe = recipe;
 
-            if (FoundryRecipe.isEnoughHeated(be, currentRecipe)) {
-                for (FluidIngredient fluidIngredient : recipe.getFluidIngredients())
+            if (FoundryRecipe.isEnoughHeated(be, (ProcessingRecipe<?, ?>) currentRecipe)) {
+                for (SizedFluidIngredient fluidIngredient : recipe.getFluidIngredients())
                     for (int i = 0; i < fluids.size(); i++) {
                         FluidStack fluid = fluids.get(i);
 
                         if (fluidIngredient.test(fluid)) {
-                            fluid.shrink(fluidIngredient.getRequiredAmount());
+                            fluid.shrink(fluidIngredient.amount());
                             if (fluid.isEmpty())
                                 fluids.remove(fluid);
                         }
@@ -198,39 +199,40 @@ public class FoundryTank implements IFluidHandler {
         }
     }
 
-    private ProcessingRecipe<?> getMatchingRecipe() {
+    private ProcessingRecipe<?, ?> getMatchingRecipe() {
         Level level = be.getLevel();
         if (level == null)
             return null;
 
-        Predicate<Recipe<?>> type = RecipeConditions.isOfType(CMRecipeTypes.ALLOYING.getType());
-        List<Recipe<?>> recipes = RecipeFinder.get(BulkAlloyingCacheKey, level, type).stream()
-                .filter(r -> FoundryRecipe.bulkMatch(be, r))
-                .sorted((r1, r2) -> r2.getIngredients()
-                        .size()
-                        - r1.getIngredients()
-                        .size())
+        List<RecipeHolder<?>> recipes = RecipeFinder.get(BulkAlloyingCacheKey, level,
+                RecipeConditions.isOfType(CMRecipeTypes.ALLOYING.getType())).stream()
+                .filter(r -> FoundryRecipe.bulkMatch(be, r.value()))
+                .sorted((r1, r2) -> r2.value().getIngredients().size() - r1.value().getIngredients().size())
                 .toList();
         if (!recipes.isEmpty())
-            return (ProcessingRecipe<?>) recipes.get(0);
+            return (ProcessingRecipe<?, ?>) recipes.get(0).value();
         return null;
     }
 
-    public CompoundTag serializeNBT(CompoundTag nbt) {
+    public CompoundTag serializeNBT(CompoundTag nbt, HolderLookup.Provider provider) {
         ListTag tags = new ListTag();
-        for (FluidStack fluid : fluids)
-            tags.add(fluid.writeToNBT(new CompoundTag()));
+        for (FluidStack fluid : fluids) {
+            FluidStack.CODEC.encodeStart(provider.createSerializationContext(NbtOps.INSTANCE), fluid)
+                    .resultOrPartial(s -> {
+                    })
+                    .ifPresent(tags::add);
+        }
         nbt.put("Tanks", tags);
 
         return nbt;
     }
 
-    public void deserializeNBT(CompoundTag nbt) {
+    public void deserializeNBT(CompoundTag nbt, HolderLookup.Provider provider) {
         ListTag list = nbt.getList("Tanks", Tag.TAG_COMPOUND);
         fluids.clear();
 
         for (int i = 0; i < list.size(); i++) {
-            FluidStack fluid = FluidStack.loadFluidStackFromNBT(list.getCompound(i));
+            FluidStack fluid = FluidStack.parseOptional(provider, list.getCompound(i));
             if (fluids.size() <= i)
                 fluids.add(fluid);
             else

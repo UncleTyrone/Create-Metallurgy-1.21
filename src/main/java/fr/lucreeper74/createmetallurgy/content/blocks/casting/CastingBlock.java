@@ -1,6 +1,5 @@
 package fr.lucreeper74.createmetallurgy.content.blocks.casting;
 
-import com.simibubi.create.Create;
 import com.simibubi.create.content.equipment.wrench.IWrenchable;
 import com.simibubi.create.foundation.block.IBE;
 import fr.lucreeper74.createmetallurgy.content.blocks.casting.table.CastingTableBlock;
@@ -24,8 +23,7 @@ import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.level.block.state.properties.DirectionProperty;
 import net.minecraft.world.phys.BlockHitResult;
-import net.minecraftforge.items.IItemHandlerModifiable;
-import net.minecraftforge.items.ItemStackHandler;
+import net.neoforged.neoforge.items.IItemHandlerModifiable;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class CastingBlock extends Block implements IBE<CastingBlockEntity>, IWrenchable {
@@ -44,14 +42,12 @@ public abstract class CastingBlock extends Block implements IBE<CastingBlockEnti
                 .setValue(LOCKED, false);
     }
 
-    @Override
     public InteractionResult use(BlockState state, Level worldIn, BlockPos pos, Player player, InteractionHand handIn,
-                                 BlockHitResult ray) {
+            BlockHitResult ray) {
         ItemStack heldItem = player.getItemInHand(handIn);
 
         if (this instanceof CastingTableBlock && ray.getDirection() != Direction.UP)
             return InteractionResult.PASS;
-
 
         if (worldIn.isClientSide)
             return InteractionResult.SUCCESS;
@@ -70,12 +66,12 @@ public abstract class CastingBlock extends Block implements IBE<CastingBlockEnti
                     be.moldInv.insertItem(0, heldItem.copy(), false);
                     heldItem.shrink(1);
                     worldIn.playSound(null, pos, SoundEvents.ITEM_FRAME_ADD_ITEM,
-                            SoundSource.PLAYERS, 1f, 1f + Create.RANDOM.nextFloat());
+                            SoundSource.PLAYERS, 1f, 1f + worldIn.random.nextFloat());
                     return InteractionResult.SUCCESS;
                 }
             }
 
-            IItemHandlerModifiable inv = be.itemCapability.orElse(new ItemStackHandler());
+            IItemHandlerModifiable inv = be.itemCapability;
 
             for (int slot = 0; slot < inv.getSlots(); slot++) {
                 ItemStack stackInSlot = inv.getStackInSlot(slot);
@@ -85,7 +81,7 @@ public abstract class CastingBlock extends Block implements IBE<CastingBlockEnti
                         .placeItemBackInInventory(stackInSlot);
                 inv.setStackInSlot(slot, ItemStack.EMPTY);
                 worldIn.playSound(null, pos, SoundEvents.ITEM_PICKUP, SoundSource.PLAYERS, .2f,
-                        1f + Create.RANDOM.nextFloat());
+                        1f + worldIn.random.nextFloat());
                 return InteractionResult.SUCCESS;
             }
             return InteractionResult.PASS;
@@ -99,7 +95,7 @@ public abstract class CastingBlock extends Block implements IBE<CastingBlockEnti
 
     @Override
     public BlockState mirror(BlockState pState, Mirror pMirror) {
-        return pState.rotate(pMirror.getRotation(pState.getValue(FACING)));
+        return rotate(pState, pMirror.getRotation(pState.getValue(FACING)));
     }
 
     @Override

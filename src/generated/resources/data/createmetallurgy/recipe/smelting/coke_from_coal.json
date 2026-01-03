@@ -1,0 +1,11 @@
+{
+  "id": "createmetallurgy:smelting/coke_from_coal",
+  "type": "minecraft:smelting",
+  "category": "misc",
+  "cookingtime": 200,
+  "experience": 0.5,
+  "ingredient": {
+    "tag": "c:ores/coal"
+  },
+  "result": "createmetallurgy:coke"
+}

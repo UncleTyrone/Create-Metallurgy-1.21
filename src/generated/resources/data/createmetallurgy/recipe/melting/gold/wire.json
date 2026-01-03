@@ -1,0 +1,26 @@
+{
+  "id": "createmetallurgy:melting/gold/wire",
+  "type": "createmetallurgy:melting",
+  "conditions": [
+    {
+      "type": "neoforge:not",
+      "value": {
+        "type": "neoforge:tag_empty",
+        "tag": "c:wires/gold"
+      }
+    }
+  ],
+  "heatRequirement": "heated",
+  "ingredients": [
+    {
+      "tag": "c:wires/gold"
+    }
+  ],
+  "processingTime": 16,
+  "results": [
+    {
+      "amount": 45,
+      "fluid": "createmetallurgy:molten_gold"
+    }
+  ]
+}

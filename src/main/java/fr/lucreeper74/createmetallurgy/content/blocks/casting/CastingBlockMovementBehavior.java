@@ -3,11 +3,12 @@ package fr.lucreeper74.createmetallurgy.content.blocks.casting;
 import com.simibubi.create.api.behaviour.movement.MovementBehaviour;
 import com.simibubi.create.content.contraptions.behaviour.MovementContext;
 import net.minecraft.core.Direction;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.phys.Vec3;
-import net.minecraftforge.items.ItemStackHandler;
+import net.neoforged.neoforge.items.ItemStackHandler;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -17,7 +18,8 @@ public class CastingBlockMovementBehavior implements MovementBehaviour {
     public Map<String, ItemStackHandler> getOrReadInventory(MovementContext context) {
         Map<String, ItemStackHandler> map = new HashMap<>();
         map.put("inv", new ItemStackHandler(9));
-        map.forEach((s, h) -> h.deserializeNBT(context.blockEntityData.getCompound(s)));
+        HolderLookup.Provider registries = context.world.registryAccess();
+        map.forEach((s, h) -> h.deserializeNBT(registries, context.blockEntityData.getCompound(s)));
         return map;
     }
 
@@ -53,11 +55,14 @@ public class CastingBlockMovementBehavior implements MovementBehaviour {
                 context.world.addFreshEntity(itemEntity);
                 itemStackHandler.setStackInSlot(i, ItemStack.EMPTY);
             }
-            context.blockEntityData.put(key, itemStackHandler.serializeNBT());
+            HolderLookup.Provider registries = context.world.registryAccess();
+            context.blockEntityData.put(key, itemStackHandler.serializeNBT(registries));
         });
         BlockEntity blockEntity = context.contraption.getBlockEntityClientSide(context.localPos);
-        if (blockEntity instanceof CastingBlockEntity castingBE)
-            castingBE.readOnlyItems(context.blockEntityData);
+        if (blockEntity instanceof CastingBlockEntity castingBE) {
+            HolderLookup.Provider registries = context.world.registryAccess();
+            castingBE.readOnlyItems(context.blockEntityData, registries);
+        }
         context.temporaryData = false; // did already dump, so can't any more
     }
 }

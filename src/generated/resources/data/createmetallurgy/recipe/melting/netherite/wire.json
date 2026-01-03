@@ -1,0 +1,26 @@
+{
+  "id": "createmetallurgy:melting/netherite/wire",
+  "type": "createmetallurgy:melting",
+  "conditions": [
+    {
+      "type": "neoforge:not",
+      "value": {
+        "type": "neoforge:tag_empty",
+        "tag": "c:wires/netherite"
+      }
+    }
+  ],
+  "heatRequirement": "superheated",
+  "ingredients": [
+    {
+      "tag": "c:wires/netherite"
+    }
+  ],
+  "processingTime": 16,
+  "results": [
+    {
+      "amount": 45,
+      "fluid": "createmetallurgy:molten_netherite"
+    }
+  ]
+}

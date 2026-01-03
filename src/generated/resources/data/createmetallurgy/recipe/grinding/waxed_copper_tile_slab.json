@@ -1,0 +1,15 @@
+{
+  "id": "createmetallurgy:grinding/waxed_copper_tile_slab",
+  "type": "createmetallurgy:grinding",
+  "ingredients": [
+    {
+      "item": "create:waxed_copper_tile_slab"
+    }
+  ],
+  "processingTime": 50,
+  "results": [
+    {
+      "id": "create:copper_tile_slab"
+    }
+  ]
+}

@@ -1,0 +1,27 @@
+{
+  "id": "createmetallurgy:bulk_melting/lead/block",
+  "type": "createmetallurgy:bulk_melting",
+  "conditions": [
+    {
+      "type": "neoforge:not",
+      "value": {
+        "type": "neoforge:tag_empty",
+        "tag": "c:storage_blocks/lead"
+      }
+    }
+  ],
+  "ingredients": [
+    {
+      "tag": "c:storage_blocks/lead"
+    }
+  ],
+  "maxHeatRequirement": 50,
+  "minHeatRequirement": 1,
+  "processingTime": 224,
+  "results": [
+    {
+      "amount": 810,
+      "fluid": "createmetallurgy:molten_lead"
+    }
+  ]
+}

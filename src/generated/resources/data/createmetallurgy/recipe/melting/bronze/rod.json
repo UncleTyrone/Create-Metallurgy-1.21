@@ -1,0 +1,26 @@
+{
+  "id": "createmetallurgy:melting/bronze/rod",
+  "type": "createmetallurgy:melting",
+  "conditions": [
+    {
+      "type": "neoforge:not",
+      "value": {
+        "type": "neoforge:tag_empty",
+        "tag": "c:rods/bronze"
+      }
+    }
+  ],
+  "heatRequirement": "heated",
+  "ingredients": [
+    {
+      "tag": "c:rods/bronze"
+    }
+  ],
+  "processingTime": 20,
+  "results": [
+    {
+      "amount": 45,
+      "fluid": "createmetallurgy:molten_bronze"
+    }
+  ]
+}

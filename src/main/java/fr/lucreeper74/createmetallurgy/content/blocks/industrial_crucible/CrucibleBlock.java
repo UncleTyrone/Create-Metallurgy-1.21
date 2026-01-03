@@ -45,12 +45,9 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
-import net.minecraftforge.common.capabilities.ForgeCapabilities;
-import net.minecraftforge.common.util.ForgeSoundType;
-import net.minecraftforge.common.util.LazyOptional;
-import net.minecraftforge.fluids.FluidStack;
-import net.minecraftforge.fluids.capability.IFluidHandler;
-import net.minecraftforge.items.ItemHandlerHelper;
+import net.neoforged.neoforge.fluids.FluidStack;
+import net.neoforged.neoforge.fluids.capability.IFluidHandler;
+import net.neoforged.neoforge.items.ItemHandlerHelper;
 
 public class CrucibleBlock extends Block implements IWrenchable, IBE<CrucibleBlockEntity> {
     public static final BooleanProperty TOP = BooleanProperty.create("top");
@@ -127,7 +124,8 @@ public class CrucibleBlock extends Block implements IWrenchable, IBE<CrucibleBlo
 
                 cBE.updateLadleState(false);
                 if (!context.getPlayer().isCreative())
-                    context.getPlayer().getInventory().placeItemBackInInventory(new ItemStack(CMItems.FOUNDRY_UNIT.get()));
+                    context.getPlayer().getInventory()
+                            .placeItemBackInInventory(new ItemStack(CMItems.FOUNDRY_UNIT.get()));
 
                 return InteractionResult.SUCCESS;
             }
@@ -135,8 +133,8 @@ public class CrucibleBlock extends Block implements IWrenchable, IBE<CrucibleBlo
         return IWrenchable.super.onSneakWrenched(state, context);
     }
 
-    @Override
-    public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hit) {
+    public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand,
+            BlockHitResult hit) {
         ItemStack heldItem = player.getItemInHand(hand);
         boolean onClient = level.isClientSide;
 
@@ -150,10 +148,9 @@ public class CrucibleBlock extends Block implements IWrenchable, IBE<CrucibleBlo
         if (be == null)
             return InteractionResult.FAIL;
 
-        LazyOptional<IFluidHandler> tankCapability = be.getCapability(ForgeCapabilities.FLUID_HANDLER);
-        if (!tankCapability.isPresent())
+        IFluidHandler fluidTank = be.getFluidHandler();
+        if (fluidTank == null)
             return InteractionResult.PASS;
-        IFluidHandler fluidTank = tankCapability.orElse(null);
         FluidStack prevFluidInTank = fluidTank.getFluidInTank(0)
                 .copy();
 
@@ -171,8 +168,9 @@ public class CrucibleBlock extends Block implements IWrenchable, IBE<CrucibleBlo
 
         SoundEvent soundevent = null;
         BlockState fluidState = null;
-        FluidStack fluidInTank = tankCapability.map(fh -> fh.getFluidInTank(0))
-                .orElse(FluidStack.EMPTY);
+        FluidStack fluidInTank = fluidTank.getFluidInTank(0);
+        if (fluidInTank.isEmpty())
+            fluidInTank = FluidStack.EMPTY;
 
         if (exchange == FluidHelper.FluidExchange.ITEM_TO_TANK) {
             Fluid fluid = fluidInTank.getFluid();
@@ -189,20 +187,21 @@ public class CrucibleBlock extends Block implements IWrenchable, IBE<CrucibleBlo
         }
 
         if (soundevent != null && !onClient) {
-            float pitch = Mth.clamp(1 - (1f * fluidInTank.getAmount() / (CrucibleBlockEntity.getCapacityFactor() * 16)), 0, 1);
+            float pitch = Mth.clamp(1 - (1f * fluidInTank.getAmount() / (CrucibleBlockEntity.getCapacityFactor() * 16)),
+                    0, 1);
             pitch /= 1.5f;
             pitch += .5f;
             pitch += (level.random.nextFloat() - .5f) / 4f;
             level.playSound(null, pos, soundevent, SoundSource.BLOCKS, .5f, pitch);
         }
 
-        if (!fluidInTank.isFluidStackIdentical(prevFluidInTank)) {
+        if (!FluidStack.isSameFluidSameComponents(fluidInTank, prevFluidInTank)) {
             if (be instanceof CrucibleBlockEntity) {
                 CrucibleBlockEntity controllerBE = be.getControllerBE();
                 if (controllerBE != null) {
                     if (onClient) {
-                        BlockParticleOption blockParticleData =
-                                new BlockParticleOption(ParticleTypes.BLOCK, fluidState);
+                        BlockParticleOption blockParticleData = new BlockParticleOption(ParticleTypes.BLOCK,
+                                fluidState);
                         float fluidLevel = (float) fluidInTank.getAmount() / fluidTank.getTankCapacity(0);
 
                         boolean reversed = fluidInTank.getFluid()
@@ -273,8 +272,10 @@ public class CrucibleBlock extends Block implements IWrenchable, IBE<CrucibleBlo
 
         if (entityIn instanceof ItemEntity itemEntity) {
             withBlockEntityDo(worldIn, entityIn.blockPosition(), be -> {
-                ItemStack insertItem = ItemHandlerHelper.insertItem(be.getControllerBE().foundry.inputInv, itemEntity.getItem()
-                        .copy(), false);
+                ItemStack insertItem = ItemHandlerHelper.insertItem(be.getControllerBE().foundry.inputInv,
+                        itemEntity.getItem()
+                                .copy(),
+                        false);
 
                 if (insertItem.isEmpty()) {
                     itemEntity.discard();
@@ -341,11 +342,14 @@ public class CrucibleBlock extends Block implements IWrenchable, IBE<CrucibleBlo
             CrucibleBlockEntity controller = be.getControllerBE();
             if (controller != null && state.getValue(BOTTOM)) {
                 if (!controller.getTank().isEmpty() && random.nextInt(200) == 0)
-                    level.playLocalSound(pos.getX(), pos.getY(), pos.getZ(), SoundEvents.LAVA_AMBIENT, SoundSource.BLOCKS, 0.2F + random.nextFloat() * 0.2F, 0.7F + random.nextFloat() * 0.15F, false);
+                    level.playLocalSound(pos.getX(), pos.getY(), pos.getZ(), SoundEvents.LAVA_AMBIENT,
+                            SoundSource.BLOCKS, 0.2F + random.nextFloat() * 0.2F, 0.7F + random.nextFloat() * 0.15F,
+                            false);
 
                 if (controller.foundry.getCurrentHeat() > 0 && random.nextInt(3) == 0) {
                     float radius = controller.getWidth() / 2f;
-                    Vec3 c = Vec3.atLowerCornerOf(controller.getBlockPos()).add(radius, controller.getHeight() * controller.getTank().getFillState(), radius);
+                    Vec3 c = Vec3.atLowerCornerOf(controller.getBlockPos()).add(radius,
+                            controller.getHeight() * controller.getTank().getFillState(), radius);
                     Vec3 v = c.add(VecHelper.offsetRandomly(Vec3.ZERO, random, radius - 4 / 16f)
                             .multiply(1, 0, 1));
 
@@ -356,9 +360,10 @@ public class CrucibleBlock extends Block implements IWrenchable, IBE<CrucibleBlo
     }
 
     // Tanks are less noisy when placed in batch
-    public static final SoundType SILENCED_BRICKS =
-            new ForgeSoundType(0.1F, 1.5F, () -> SoundEvents.DEEPSLATE_BRICKS_BREAK, () -> SoundEvents.DEEPSLATE_BRICKS_STEP,
-                    () -> SoundEvents.DEEPSLATE_BRICKS_PLACE, () -> SoundEvents.DEEPSLATE_BRICKS_HIT, () -> SoundEvents.DEEPSLATE_BRICKS_FALL);
+    @SuppressWarnings("deprecation")
+    public static final SoundType SILENCED_BRICKS = new SoundType(0.1F, 1.5F,
+            SoundEvents.DEEPSLATE_BRICKS_BREAK, SoundEvents.DEEPSLATE_BRICKS_STEP,
+            SoundEvents.DEEPSLATE_BRICKS_PLACE, SoundEvents.DEEPSLATE_BRICKS_HIT, SoundEvents.DEEPSLATE_BRICKS_FALL);
 
     @Override
     public SoundType getSoundType(BlockState state, LevelReader world, BlockPos pos, Entity entity) {

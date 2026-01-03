@@ -5,7 +5,7 @@
       "conditions": {
         "items": [
           {
-            "tag": "forge:wires/tungsten"
+            "tag": "c:wires/tungsten"
           }
         ]
       },

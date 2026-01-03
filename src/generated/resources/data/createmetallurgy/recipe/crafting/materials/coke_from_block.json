@@ -1,0 +1,14 @@
+{
+  "id": "createmetallurgy:crafting/materials/coke_from_block",
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "createmetallurgy:coke_block"
+    }
+  ],
+  "result": {
+    "count": 9,
+    "id": "createmetallurgy:coke"
+  }
+}

@@ -1,0 +1,26 @@
+{
+  "id": "createmetallurgy:melting/silver/rod",
+  "type": "createmetallurgy:melting",
+  "conditions": [
+    {
+      "type": "neoforge:not",
+      "value": {
+        "type": "neoforge:tag_empty",
+        "tag": "c:rods/silver"
+      }
+    }
+  ],
+  "heatRequirement": "heated",
+  "ingredients": [
+    {
+      "tag": "c:rods/silver"
+    }
+  ],
+  "processingTime": 20,
+  "results": [
+    {
+      "amount": 45,
+      "fluid": "createmetallurgy:molten_silver"
+    }
+  ]
+}

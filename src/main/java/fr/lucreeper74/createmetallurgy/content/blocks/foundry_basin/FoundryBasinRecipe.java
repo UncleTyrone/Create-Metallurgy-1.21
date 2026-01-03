@@ -3,29 +3,30 @@ package fr.lucreeper74.createmetallurgy.content.blocks.foundry_basin;
 import com.simibubi.create.content.processing.basin.BasinBlockEntity;
 import com.simibubi.create.content.processing.burner.BlazeBurnerBlock;
 import com.simibubi.create.content.processing.recipe.ProcessingRecipe;
-import com.simibubi.create.content.processing.recipe.ProcessingRecipeBuilder;
+import com.simibubi.create.content.processing.recipe.ProcessingRecipeParams;
 import com.simibubi.create.foundation.blockEntity.behaviour.filtering.FilteringBehaviour;
 import com.simibubi.create.foundation.blockEntity.behaviour.fluid.SmartFluidTankBehaviour;
-import com.simibubi.create.foundation.fluid.FluidIngredient;
 import com.simibubi.create.foundation.item.SmartInventory;
 import com.simibubi.create.foundation.recipe.IRecipeTypeInfo;
 import net.createmod.catnip.data.Iterate;
+import net.minecraft.util.RandomSource;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.item.crafting.Recipe;
+import net.minecraft.world.item.crafting.RecipeInput;
 import net.minecraft.world.level.Level;
-import net.minecraftforge.common.capabilities.ForgeCapabilities;
-import net.minecraftforge.fluids.FluidStack;
-import net.minecraftforge.fluids.capability.IFluidHandler;
-import net.minecraftforge.items.IItemHandler;
-import net.minecraftforge.items.ItemHandlerHelper;
+import net.neoforged.neoforge.fluids.FluidStack;
+import net.neoforged.neoforge.fluids.capability.IFluidHandler;
+import net.neoforged.neoforge.fluids.crafting.SizedFluidIngredient;
+import net.neoforged.neoforge.items.IItemHandler;
+import net.neoforged.neoforge.items.ItemHandlerHelper;
 
 import javax.annotation.Nonnull;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
-public class FoundryBasinRecipe extends ProcessingRecipe<SmartInventory> {
+public class FoundryBasinRecipe extends ProcessingRecipe<RecipeInput, ProcessingRecipeParams> {
     public static boolean match(FoundryBasinBlockEntity basin, Recipe<?> recipe) {
         FilteringBehaviour filter = basin.getFilter();
         if (filter == null)
@@ -53,10 +54,8 @@ public class FoundryBasinRecipe extends ProcessingRecipe<SmartInventory> {
 
     private static boolean apply(FoundryBasinBlockEntity basin, Recipe<?> recipe, boolean test) {
         boolean isBasinRecipe = recipe instanceof FoundryBasinRecipe;
-        IItemHandler availableItems = basin.getCapability(ForgeCapabilities.ITEM_HANDLER)
-                .orElse(null);
-        IFluidHandler availableFluids = basin.getCapability(ForgeCapabilities.FLUID_HANDLER)
-                .orElse(null);
+        IItemHandler availableItems = basin.getItemHandler();
+        IFluidHandler availableFluids = basin.getFluidHandler();
 
         if (availableItems == null || availableFluids == null)
             return false;
@@ -69,7 +68,7 @@ public class FoundryBasinRecipe extends ProcessingRecipe<SmartInventory> {
             return false;
 
         List<Ingredient> ingredients = new LinkedList<>(recipe.getIngredients());
-        List<FluidIngredient> fluidIngredients =
+        List<SizedFluidIngredient> fluidIngredients =
                 isBasinRecipe ? ((FoundryBasinRecipe) recipe).getFluidIngredients() : Collections.emptyList();
 
         for (boolean simulate : Iterate.trueAndFalse) {
@@ -101,8 +100,8 @@ public class FoundryBasinRecipe extends ProcessingRecipe<SmartInventory> {
 
             boolean fluidsAffected = false;
             FluidIngredients:
-            for (FluidIngredient fluidIngredient : fluidIngredients) {
-                int amountRequired = fluidIngredient.getRequiredAmount();
+            for (SizedFluidIngredient fluidIngredient : fluidIngredients) {
+                int amountRequired = fluidIngredient.amount();
 
                 for (int tank = 0; tank < availableFluids.getTanks(); tank++) {
                     FluidStack fluidStack = availableFluids.getFluidInTank(tank);
@@ -140,14 +139,14 @@ public class FoundryBasinRecipe extends ProcessingRecipe<SmartInventory> {
                 SmartInventory outputInv = basin.getOutputInventory();
 
                 outputInv.allowInsertion();
-                for (ItemStack output : basinRecipe.rollResults()) {
+                for (ItemStack output : basinRecipe.rollResults(RandomSource.create())) {
                     if (!ItemHandlerHelper.insertItemStacked(outputInv, output.copy(), simulate)
                             .isEmpty())
                         return false;
                 }
                 outputInv.forbidInsertion();
 
-                IFluidHandler targetTank = basin.getOutputTank().getCapability().orElse(null);
+                IFluidHandler targetTank = basin.getOutputTank().getCapability();
 
                 for (FluidStack fluidResult : basinRecipe.getFluidResults()) {
                     IFluidHandler.FluidAction action = simulate ? IFluidHandler.FluidAction.SIMULATE : IFluidHandler.FluidAction.EXECUTE;
@@ -162,7 +161,7 @@ public class FoundryBasinRecipe extends ProcessingRecipe<SmartInventory> {
         return true;
     }
 
-    protected FoundryBasinRecipe(IRecipeTypeInfo type, ProcessingRecipeBuilder.ProcessingRecipeParams params) {
+    protected FoundryBasinRecipe(IRecipeTypeInfo type, ProcessingRecipeParams params) {
         super(type, params);
     }
 
@@ -197,7 +196,7 @@ public class FoundryBasinRecipe extends ProcessingRecipe<SmartInventory> {
     }
 
     @Override
-    public boolean matches(SmartInventory inv, @Nonnull Level worldIn) {
+    public boolean matches(RecipeInput inv, @Nonnull Level worldIn) {
         return false;
     }
 }

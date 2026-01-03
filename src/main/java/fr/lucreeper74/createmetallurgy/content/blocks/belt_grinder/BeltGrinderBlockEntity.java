@@ -1,13 +1,12 @@
 package fr.lucreeper74.createmetallurgy.content.blocks.belt_grinder;
 
-import com.google.common.collect.ImmutableList;
 import com.simibubi.create.AllSoundEvents;
 import com.simibubi.create.content.equipment.sandPaper.SandPaperPolishingRecipe;
 import com.simibubi.create.content.kinetics.base.KineticBlockEntity;
 import com.simibubi.create.content.kinetics.belt.behaviour.DirectBeltInputBehaviour;
 import com.simibubi.create.content.kinetics.saw.CuttingRecipe;
 import com.simibubi.create.content.processing.recipe.ProcessingInventory;
-import com.simibubi.create.content.processing.sequenced.SequencedAssemblyRecipe;
+import com.simibubi.create.content.processing.sequenced.SequencedAssemblyItem;
 import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour;
 import com.simibubi.create.foundation.blockEntity.behaviour.filtering.FilteringBehaviour;
 import com.simibubi.create.foundation.item.ItemHelper;
@@ -31,26 +30,23 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.phys.Vec3;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.common.capabilities.Capability;
-import net.minecraftforge.common.capabilities.ForgeCapabilities;
-import net.minecraftforge.common.util.LazyOptional;
-import net.minecraftforge.items.IItemHandlerModifiable;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
+import net.neoforged.neoforge.items.IItemHandlerModifiable;
 
-import javax.annotation.Nonnull;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 public class BeltGrinderBlockEntity extends KineticBlockEntity {
 
     private static final Object grindingRecipesKey = new Object();
-    protected LazyOptional<IItemHandlerModifiable> itemCapability;
+    protected IItemHandlerModifiable itemCapability;
     public ProcessingInventory inv;
     public int processingTick;
     private int recipeIndex;
@@ -59,7 +55,7 @@ public class BeltGrinderBlockEntity extends KineticBlockEntity {
     public BeltGrinderBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state) {
         super(type, pos, state);
         inv = new ProcessingInventory(this::start);
-        itemCapability = LazyOptional.of(() -> inv);
+        itemCapability = inv;
         recipeIndex = 0;
     }
 
@@ -72,27 +68,23 @@ public class BeltGrinderBlockEntity extends KineticBlockEntity {
     }
 
     @Override
-    public void write(CompoundTag compound, boolean clientPacket) {
-        compound.put("inv", inv.serializeNBT());
+    public void write(CompoundTag compound, HolderLookup.Provider registries, boolean clientPacket) {
+        compound.put("inv", inv.serializeNBT(registries));
         compound.putInt("processTicks", processingTick);
         compound.putInt("RecipeIndex", recipeIndex);
-        super.write(compound, clientPacket);
+        super.write(compound, registries, clientPacket);
     }
 
     @Override
-    protected void read(CompoundTag compound, boolean clientPacket) {
-        inv.deserializeNBT(compound.getCompound("inv"));
+    protected void read(CompoundTag compound, HolderLookup.Provider registries, boolean clientPacket) {
+        inv.deserializeNBT(registries, compound.getCompound("inv"));
         processingTick = compound.getInt("processTicks");
         recipeIndex = compound.getInt("RecipeIndex");
-        super.read(compound, clientPacket);
+        super.read(compound, registries, clientPacket);
     }
 
-    @Nonnull
-    @Override
-    public <T> LazyOptional<T> getCapability(@Nonnull Capability<T> cap, Direction side) {
-        if (cap == ForgeCapabilities.ITEM_HANDLER)
-            return itemCapability.cast();
-        return super.getCapability(cap, side);
+    public IItemHandlerModifiable getItemHandler() {
+        return itemCapability;
     }
 
     @Override
@@ -165,7 +157,7 @@ public class BeltGrinderBlockEntity extends KineticBlockEntity {
                 if (stack.isEmpty())
                     continue;
                 ItemStack remainder = behaviour.handleInsertion(stack, itemMovementFacing, false);
-                if (remainder.equals(stack, false))
+                if (ItemStack.isSameItemSameComponents(remainder, stack))
                     continue;
                 inv.setStackInSlot(slot, remainder);
                 changed = true;
@@ -238,18 +230,35 @@ public class BeltGrinderBlockEntity extends KineticBlockEntity {
     }
 
     private List<? extends Recipe<?>> getRecipes() {
-        Optional<GrindingRecipe> assemblyRecipe = SequencedAssemblyRecipe.getRecipe(level, inv.getStackInSlot(0),
-                CMRecipeTypes.GRINDING.getType(), GrindingRecipe.class);
-        if (assemblyRecipe.isPresent() && filtering.test(assemblyRecipe.get()
-                .getResultItem(level.registryAccess())))
-            return ImmutableList.of(assemblyRecipe.get());
+        ItemStack input = inv.getStackInSlot(0);
 
-        Predicate<Recipe<?>> types = RecipeConditions.isOfType(CMRecipeTypes.GRINDING.getType(), com.simibubi.create.AllRecipeTypes.SANDPAPER_POLISHING.getType());
+        // Check if input is a SequencedAssemblyItem and find its recipe step
+        if (input.getItem() instanceof SequencedAssemblyItem) {
+            List<RecipeHolder<?>> sequencedHolders = RecipeFinder.get(grindingRecipesKey, level,
+                    RecipeConditions.isOfType(CMRecipeTypes.GRINDING.getType(),
+                            com.simibubi.create.AllRecipeTypes.SANDPAPER_POLISHING.getType()));
 
-        List<Recipe<?>> startedSearch = RecipeFinder.get(grindingRecipesKey, level, types);
-        return startedSearch.stream()
-                .filter(RecipeConditions.outputMatchesFilter(filtering))
-                .filter(RecipeConditions.firstIngredientMatches(inv.getStackInSlot(0)))
+            // Find recipes that match the sequenced assembly item
+            Optional<? extends Recipe<?>> assemblyRecipe = sequencedHolders.stream()
+                    .filter(holder -> RecipeConditions.firstIngredientMatches(input).test(holder))
+                    .map(RecipeHolder::value)
+                    .filter(recipe -> recipe instanceof GrindingRecipe)
+                    .filter(recipe -> filtering.test(recipe.getResultItem(level.registryAccess())))
+                    .findFirst();
+
+            if (assemblyRecipe.isPresent()) {
+                return List.of(assemblyRecipe.get());
+            }
+        }
+
+        // Regular recipe lookup for non-sequenced items
+        List<RecipeHolder<?>> holders = RecipeFinder.get(grindingRecipesKey, level,
+                RecipeConditions.isOfType(CMRecipeTypes.GRINDING.getType(),
+                        com.simibubi.create.AllRecipeTypes.SANDPAPER_POLISHING.getType()));
+        return holders.stream()
+                .filter(holder -> RecipeConditions.outputMatchesFilter(filtering).test(holder))
+                .filter(holder -> RecipeConditions.firstIngredientMatches(input).test(holder))
+                .map(RecipeHolder::value)
                 .collect(Collectors.toList());
     }
 
@@ -270,7 +279,7 @@ public class BeltGrinderBlockEntity extends KineticBlockEntity {
         for (int roll = 0; roll < rolls; roll++) {
             List<ItemStack> results = new LinkedList<ItemStack>();
             if (recipe instanceof GrindingRecipe)
-                results = ((GrindingRecipe) recipe).rollResults();
+                results = ((GrindingRecipe) recipe).rollResults(RandomSource.create());
             else if (recipe instanceof SandPaperPolishingRecipe)
                 results.add(recipe.getResultItem(level.registryAccess())
                         .copy());
@@ -299,7 +308,7 @@ public class BeltGrinderBlockEntity extends KineticBlockEntity {
             entity.setItem(remainder);
     }
 
-    //Client Things
+    // Client Things
     @Override
     @OnlyIn(Dist.CLIENT)
     public void tickAudio() {
@@ -309,7 +318,8 @@ public class BeltGrinderBlockEntity extends KineticBlockEntity {
             return;
         if (!inv.isEmpty() && AnimationTickHolder.getTicks() % 4 == 0) {
             float pitch = Mth.clamp((speed / 256f) * 2f, .5f, 1.6f);
-            AllSoundEvents.SANDING_SHORT.playAt(level, worldPosition, .3f, level.random.nextFloat() * 0.5F + pitch, true);
+            AllSoundEvents.SANDING_SHORT.playAt(level, worldPosition, .3f, level.random.nextFloat() * 0.5F + pitch,
+                    true);
         }
     }
 

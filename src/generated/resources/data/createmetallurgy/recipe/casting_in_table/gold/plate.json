@@ -1,0 +1,18 @@
+{
+  "id": "createmetallurgy:casting_in_table/gold/plate",
+  "type": "createmetallurgy:casting_in_table",
+  "ingredients": [
+    {
+      "item": "createmetallurgy:graphite_plate_mold"
+    },
+    {
+      "amount": 90,
+      "fluid": "createmetallurgy:molten_gold",
+      "nbt": {}
+    }
+  ],
+  "processingTime": 60,
+  "result": {
+    "id": "create:golden_sheet"
+  }
+}

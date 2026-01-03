@@ -8,10 +8,9 @@ import fr.lucreeper74.createmetallurgy.CreateMetallurgy;
 import net.createmod.catnip.render.SpriteShiftEntry;
 import net.createmod.catnip.render.SpriteShifter;
 
-@SuppressWarnings("unused")
 public class CMSpriteShifts {
-    public static final SpriteShiftEntry SAND_PAPER_BELT =
-            get("block/grinder_belt/sand_paper", "block/grinder_belt/sand_paper_scroll"),
+    public static final SpriteShiftEntry SAND_PAPER_BELT = get("block/grinder_belt/sand_paper",
+            "block/grinder_belt/sand_paper_scroll"),
             RED_SAND_PAPER_BELT = get("block/grinder_belt/red_sand_paper", "block/grinder_belt/red_sand_paper_scroll");
 
     public static final CTSpriteShiftEntry INDUSTRIAL_LADLE = rectangleType("industrial_crucible/crucible"),
@@ -22,12 +21,13 @@ public class CMSpriteShifts {
     //
 
     private static SpriteShiftEntry get(String originalLocation, String targetLocation) {
-        return SpriteShifter.get(CreateMetallurgy.genRL(originalLocation), CreateMetallurgy.genRL(targetLocation));
+        return SpriteShifter.get(CreateMetallurgy.asResource(originalLocation),
+                CreateMetallurgy.asResource(targetLocation));
     }
 
     private static CTSpriteShiftEntry getCT(CTType type, String name) {
-        return CTSpriteShifter.getCT(type, CreateMetallurgy.genRL("block/" + name),
-                CreateMetallurgy.genRL("block/" + name + "_connected"));
+        return CTSpriteShifter.getCT(type, CreateMetallurgy.asResource("block/" + name),
+                CreateMetallurgy.asResource("block/" + name + "_connected"));
     }
 
     private static CTSpriteShiftEntry rectangleType(String name) {

@@ -1,9 +1,10 @@
 package fr.lucreeper74.createmetallurgy.content.blocks.casting;
 
 import net.createmod.catnip.animation.LerpedFloat;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraftforge.fluids.FluidStack;
-import net.minecraftforge.fluids.capability.templates.FluidTank;
+import net.neoforged.neoforge.fluids.FluidStack;
+import net.neoforged.neoforge.fluids.capability.templates.FluidTank;
 import org.jetbrains.annotations.NotNull;
 
 public class CastingFluidTank extends FluidTank {
@@ -23,15 +24,15 @@ public class CastingFluidTank extends FluidTank {
                 .chase(0, .25f, LerpedFloat.Chaser.EXP);
     }
 
-    public FluidTank readFromNBT(CompoundTag nbt, boolean clientPacket) {
-        setFluid(FluidStack.loadFluidStackFromNBT(nbt.getCompound("fluid")));
+    public FluidTank readFromNBT(CompoundTag nbt, HolderLookup.Provider registries, boolean clientPacket) {
+        setFluid(FluidStack.parseOptional(registries, nbt.getCompound("fluid")));
         setCapacity(nbt.getInt("capacity"));
         fluidLevel.readNBT(nbt.getCompound("level"), clientPacket);
         return this;
     }
 
-    public CompoundTag writeToNBT(CompoundTag nbt) {
-        nbt.put("fluid", fluid.writeToNBT(new CompoundTag()));
+    public CompoundTag writeToNBT(CompoundTag nbt, HolderLookup.Provider registries) {
+        nbt.put("fluid", fluid.saveOptional(registries));
         nbt.putInt("capacity", capacity);
         nbt.put("level", fluidLevel.writeNBT());
         return nbt;
@@ -98,13 +99,13 @@ public class CastingFluidTank extends FluidTank {
         if (fluid.isEmpty()) {
             int amount = Math.min(capacity, resource.getAmount());
             if (action.execute()) {
-                fluid = new FluidStack(resource, amount);
+                fluid = resource.copyWithAmount(amount);
                 onContentsChanged();
             }
             return amount;
         }
         // Safety (should never false)
-        if (!fluid.isFluidEqual(resource)) {
+        if (!FluidStack.isSameFluidSameComponents(fluid, resource)) {
             return 0;
         }
         // If full -> nothing
@@ -132,9 +133,9 @@ public class CastingFluidTank extends FluidTank {
 
     @Override
     public @NotNull FluidStack drain(int maxDrain, FluidAction action) {
-        int drained =  Math.min(fluid.getAmount(), maxDrain);
+        int drained = Math.min(fluid.getAmount(), maxDrain);
 
-        FluidStack stack = new FluidStack(fluid, drained);
+        FluidStack stack = fluid.copyWithAmount(drained);
         if (action.execute() && drained > 0) {
             fluid.shrink(drained);
 

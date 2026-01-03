@@ -3,6 +3,7 @@ package fr.lucreeper74.createmetallurgy.content.blocks.industrial_crucible.found
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonSyntaxException;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
@@ -10,20 +11,17 @@ import net.minecraft.tags.TagKey;
 import net.minecraft.util.GsonHelper;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
-import net.minecraftforge.registries.ForgeRegistries;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
 
 public abstract class EntityIngredient implements Predicate<EntityType<?>> {
 
     public static final EntityIngredient EMPTY = new EntityTypeIngredient();
 
     public List<EntityType<?>> entities;
-
 
     public static EntityIngredient fromTag(TagKey<EntityType<?>> tag, int damage) {
         EntityTagIngredient ingredient = new EntityTagIngredient();
@@ -47,6 +45,7 @@ public abstract class EntityIngredient implements Predicate<EntityType<?>> {
     }
 
     protected int damage = 1; // Default damage is 1
+
     protected abstract boolean testInternal(EntityType<?> type);
 
     protected abstract void readInternal(FriendlyByteBuf buffer);
@@ -105,7 +104,8 @@ public abstract class EntityIngredient implements Predicate<EntityType<?>> {
         JsonObject json = je.getAsJsonObject();
         if (json.has("tag"))
             return true;
-        else return json.has("type");
+        else
+            return json.has("type");
     }
 
     public static EntityIngredient deserialize(@Nullable JsonElement je) {
@@ -133,17 +133,18 @@ public abstract class EntityIngredient implements Predicate<EntityType<?>> {
 
         @Override
         protected void readInternal(FriendlyByteBuf buffer) {
-            entityType = buffer.readRegistryId();
+            ResourceLocation id = buffer.readResourceLocation();
+            entityType = BuiltInRegistries.ENTITY_TYPE.get(id);
         }
 
         @Override
         protected void writeInternal(FriendlyByteBuf buffer) {
-            buffer.writeRegistryId(ForgeRegistries.ENTITY_TYPES, entityType);
+            buffer.writeResourceLocation(EntityType.getKey(entityType));
         }
 
         @Override
         protected void readInternal(JsonObject json) {
-            entityType = ForgeRegistries.ENTITY_TYPES.getValue(new ResourceLocation(json.get("type").getAsString()));
+            entityType = BuiltInRegistries.ENTITY_TYPE.get(ResourceLocation.parse(json.get("type").getAsString()));
         }
 
         @Override
@@ -174,7 +175,7 @@ public abstract class EntityIngredient implements Predicate<EntityType<?>> {
             int size = buffer.readVarInt();
             entities = new ArrayList<>(size);
             for (int i = 0; i < size; i++)
-                entities.add(ForgeRegistries.ENTITY_TYPES.getValue(buffer.readResourceLocation()));
+                entities.add(BuiltInRegistries.ENTITY_TYPE.get(buffer.readResourceLocation()));
         }
 
         @Override
@@ -186,7 +187,7 @@ public abstract class EntityIngredient implements Predicate<EntityType<?>> {
 
         @Override
         protected void readInternal(JsonObject json) {
-            ResourceLocation name = new ResourceLocation(GsonHelper.getAsString(json, "tag"));
+            ResourceLocation name = ResourceLocation.parse(GsonHelper.getAsString(json, "tag"));
             tag = TagKey.create(Registries.ENTITY_TYPE, name);
         }
 
@@ -198,13 +199,16 @@ public abstract class EntityIngredient implements Predicate<EntityType<?>> {
 
         @Override
         protected List<EntityType<?>> determineEntities() {
-            return ForgeRegistries.ENTITY_TYPES.tags()
-                    .getTag(tag).stream().collect(Collectors.toList());
+            List<EntityType<?>> result = new ArrayList<>();
+            BuiltInRegistries.ENTITY_TYPE.getTag(tag)
+                    .ifPresent(holders -> holders.forEach(holder -> result.add(holder.value())));
+            return result;
         }
     }
 
     /* For JEI purposes */
     private List<EntityStack> display;
+
     public List<EntityStack> getDisplay() {
         if (display == null)
             display = EntityStack.wrap(getEntities());

@@ -1,0 +1,22 @@
+{
+  "id": "createmetallurgy:crafting/content/sturdy_whisk",
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "A": {
+      "item": "create:andesite_alloy"
+    },
+    "B": {
+      "item": "create:sturdy_sheet"
+    }
+  },
+  "pattern": [
+    " A ",
+    "BAB",
+    "BBB"
+  ],
+  "result": {
+    "id": "createmetallurgy:sturdy_whisk"
+  },
+  "show_notification": true
+}

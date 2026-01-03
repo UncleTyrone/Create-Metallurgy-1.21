@@ -1,0 +1,30 @@
+{
+  "id": "createmetallurgy:melting/steel/raw_material",
+  "type": "createmetallurgy:melting",
+  "conditions": [
+    {
+      "type": "neoforge:not",
+      "value": {
+        "type": "neoforge:tag_empty",
+        "tag": "c:raw_materials/steel"
+      }
+    }
+  ],
+  "heatRequirement": "heated",
+  "ingredients": [
+    {
+      "tag": "c:raw_materials/steel"
+    }
+  ],
+  "processingTime": 40,
+  "results": [
+    {
+      "amount": 90,
+      "fluid": "createmetallurgy:molten_steel"
+    },
+    {
+      "amount": 45,
+      "fluid": "createmetallurgy:molten_slag"
+    }
+  ]
+}

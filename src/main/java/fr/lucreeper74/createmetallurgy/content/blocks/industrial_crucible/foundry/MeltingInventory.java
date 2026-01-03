@@ -5,8 +5,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.items.IItemHandlerModifiable;
-import net.minecraftforge.items.ItemHandlerHelper;
+import net.neoforged.neoforge.items.IItemHandlerModifiable;
 import org.jetbrains.annotations.NotNull;
 
 public class MeltingInventory implements IItemHandlerModifiable {
@@ -75,7 +74,7 @@ public class MeltingInventory implements IItemHandlerModifiable {
         boolean canInsert = getStackInSlot(slot).isEmpty();
         if (canInsert && !simulate)
             setStackInSlot(slot, stack.copy());
-        return canInsert ? ItemHandlerHelper.copyStackWithSize(stack, stack.getCount() - 1) : stack;
+        return canInsert ? stack.copyWithCount(stack.getCount() - 1) : stack;
     }
 
     @Override

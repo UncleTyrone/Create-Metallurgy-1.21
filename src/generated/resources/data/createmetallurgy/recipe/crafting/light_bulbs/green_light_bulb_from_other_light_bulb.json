@@ -1,0 +1,16 @@
+{
+  "id": "createmetallurgy:crafting/light_bulbs/green_light_bulb_from_other_light_bulb",
+  "type": "minecraft:crafting_shapeless",
+  "category": "redstone",
+  "ingredients": [
+    {
+      "tag": "c:dyes/green"
+    },
+    {
+      "tag": "createmetallurgy:light_bulb"
+    }
+  ],
+  "result": {
+    "id": "createmetallurgy:green_light_bulb"
+  }
+}

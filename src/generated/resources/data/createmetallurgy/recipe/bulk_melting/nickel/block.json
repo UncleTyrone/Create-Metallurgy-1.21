@@ -1,0 +1,27 @@
+{
+  "id": "createmetallurgy:bulk_melting/nickel/block",
+  "type": "createmetallurgy:bulk_melting",
+  "conditions": [
+    {
+      "type": "neoforge:not",
+      "value": {
+        "type": "neoforge:tag_empty",
+        "tag": "c:storage_blocks/nickel"
+      }
+    }
+  ],
+  "ingredients": [
+    {
+      "tag": "c:storage_blocks/nickel"
+    }
+  ],
+  "maxHeatRequirement": 50,
+  "minHeatRequirement": 7,
+  "processingTime": 224,
+  "results": [
+    {
+      "amount": 810,
+      "fluid": "createmetallurgy:molten_nickel"
+    }
+  ]
+}

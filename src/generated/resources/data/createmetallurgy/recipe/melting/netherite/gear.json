@@ -1,0 +1,26 @@
+{
+  "id": "createmetallurgy:melting/netherite/gear",
+  "type": "createmetallurgy:melting",
+  "conditions": [
+    {
+      "type": "neoforge:not",
+      "value": {
+        "type": "neoforge:tag_empty",
+        "tag": "c:gears/netherite"
+      }
+    }
+  ],
+  "heatRequirement": "superheated",
+  "ingredients": [
+    {
+      "tag": "c:gears/netherite"
+    }
+  ],
+  "processingTime": 160,
+  "results": [
+    {
+      "amount": 360,
+      "fluid": "createmetallurgy:molten_netherite"
+    }
+  ]
+}

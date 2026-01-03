@@ -1,0 +1,16 @@
+{
+  "id": "createmetallurgy:crafting/light_bulbs/white_light_bulb_from_other_light_bulb",
+  "type": "minecraft:crafting_shapeless",
+  "category": "redstone",
+  "ingredients": [
+    {
+      "tag": "c:dyes/white"
+    },
+    {
+      "tag": "createmetallurgy:light_bulb"
+    }
+  ],
+  "result": {
+    "id": "createmetallurgy:white_light_bulb"
+  }
+}

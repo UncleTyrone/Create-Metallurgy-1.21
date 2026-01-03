@@ -9,7 +9,6 @@ import net.minecraft.core.HolderSet;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.EntityType;
-import net.minecraftforge.registries.ForgeRegistries;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
@@ -29,13 +28,14 @@ public class EntityIngredientHelper implements IIngredientHelper<EntityIngredien
     }
 
     @Override
+    @SuppressWarnings("removal")
     public String getUniqueId(EntityIngredient.EntityStack type, UidContext context) {
         return getResourceLocation(type).toString();
     }
 
     @Override
     public ResourceLocation getResourceLocation(EntityIngredient.EntityStack type) {
-        return ForgeRegistries.ENTITY_TYPES.getKey(type.type());
+        return EntityType.getKey(type.type());
     }
 
     @Override
@@ -52,6 +52,7 @@ public class EntityIngredientHelper implements IIngredientHelper<EntityIngredien
     }
 
     @Override
+    @SuppressWarnings("removal")
     public Optional<ResourceLocation> getTagEquivalent(Collection<EntityIngredient.EntityStack> ingredients) {
         /* From JEI mezz.jei.common.util.TagUtil */
 
@@ -62,7 +63,7 @@ public class EntityIngredientHelper implements IIngredientHelper<EntityIngredien
                 .map(EntityIngredient.EntityStack::type)
                 .toList();
 
-        return  BuiltInRegistries.ENTITY_TYPE.getTags()
+        return BuiltInRegistries.ENTITY_TYPE.getTags()
                 .filter(e -> {
                     HolderSet.Named<EntityType<?>> tag = e.getSecond();
                     int count = tag.size();

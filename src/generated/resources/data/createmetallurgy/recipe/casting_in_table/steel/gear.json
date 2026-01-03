@@ -1,0 +1,27 @@
+{
+  "id": "createmetallurgy:casting_in_table/steel/gear",
+  "type": "createmetallurgy:casting_in_table",
+  "conditions": [
+    {
+      "type": "neoforge:not",
+      "value": {
+        "type": "neoforge:tag_empty",
+        "tag": "c:gears/steel"
+      }
+    }
+  ],
+  "ingredients": [
+    {
+      "item": "createmetallurgy:graphite_gear_mold"
+    },
+    {
+      "amount": 360,
+      "fluid": "createmetallurgy:molten_steel",
+      "nbt": {}
+    }
+  ],
+  "processingTime": 240,
+  "result": {
+    "tag": "c:gears/steel"
+  }
+}

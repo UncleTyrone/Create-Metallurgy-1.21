@@ -1,0 +1,27 @@
+{
+  "id": "createmetallurgy:casting_in_table/osmium/plate",
+  "type": "createmetallurgy:casting_in_table",
+  "conditions": [
+    {
+      "type": "neoforge:not",
+      "value": {
+        "type": "neoforge:tag_empty",
+        "tag": "c:plates/osmium"
+      }
+    }
+  ],
+  "ingredients": [
+    {
+      "item": "createmetallurgy:graphite_plate_mold"
+    },
+    {
+      "amount": 90,
+      "fluid": "createmetallurgy:molten_osmium",
+      "nbt": {}
+    }
+  ],
+  "processingTime": 60,
+  "result": {
+    "tag": "c:plates/osmium"
+  }
+}

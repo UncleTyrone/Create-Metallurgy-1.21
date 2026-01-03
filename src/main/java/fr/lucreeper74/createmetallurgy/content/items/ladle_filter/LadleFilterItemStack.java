@@ -5,24 +5,51 @@ import fr.lucreeper74.createmetallurgy.content.entities.ladle.LadleItem;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
-import net.minecraftforge.fluids.FluidStack;
+import net.neoforged.neoforge.fluids.FluidStack;
 
 public class LadleFilterItemStack extends FilterItemStack {
 
     public String AddressFilter;
-    FluidStack fluidFilter;
+    private final CompoundTag fluidFilterTag;
+    private FluidStack cachedFluidFilter;
     int filledAmount;
     int comparator;
 
     public LadleFilterItemStack(ItemStack filter) {
         super(filter);
-        boolean defaults = !filter.hasTag();
-        CompoundTag tag = filter.getOrCreateTag();
+        var customData = filter.get(net.minecraft.core.component.DataComponents.CUSTOM_DATA);
+        boolean defaults = customData == null;
+        CompoundTag tag = defaults ? new CompoundTag() : customData.copyTag();
 
         filledAmount = defaults ? -1 : tag.getInt("FilledAmount");
         AddressFilter = defaults ? "*" : tag.getString("Address");
         comparator = defaults ? 0 : tag.getInt("Comparator");
-        fluidFilter = FluidStack.loadFluidStackFromNBT(tag.getCompound("FluidFilter"));
+
+        // Store the fluid filter tag for lazy parsing when we have registry access
+        CompoundTag fluidTag = tag.getCompound("FluidFilter");
+        fluidFilterTag = fluidTag.isEmpty() ? null : fluidTag;
+        cachedFluidFilter = null; // Will be parsed lazily in test() method
+    }
+
+    /**
+     * Gets the fluid filter, parsing it from NBT if needed using the provided
+     * registry access.
+     * This is called lazily in the test() method when we have access to
+     * Level.registryAccess().
+     */
+    private FluidStack getFluidFilter(net.minecraft.core.HolderLookup.Provider registries) {
+        if (cachedFluidFilter == null) {
+            if (fluidFilterTag == null || fluidFilterTag.isEmpty()) {
+                cachedFluidFilter = FluidStack.EMPTY;
+            } else {
+                // Parse with registry access
+                cachedFluidFilter = FluidStack.parseOptional(registries, fluidFilterTag);
+                if (cachedFluidFilter == null) {
+                    cachedFluidFilter = FluidStack.EMPTY;
+                }
+            }
+        }
+        return cachedFluidFilter;
     }
 
     @Override
@@ -32,7 +59,12 @@ public class LadleFilterItemStack extends FilterItemStack {
 
         if (LadleItem.isLadle(stack)) {
             boolean address_match = LadleItem.matchAddress(stack, AddressFilter) || AddressFilter.contentEquals("*");
-            boolean fluid_match = fluidFilter.isEmpty() || fluidFilter.isFluidEqual(LadleItem.getFluidContents(stack).getFluid());
+            var ladleTank = LadleItem.getFluidContents(stack, world.registryAccess());
+            FluidStack ladleFluid = ladleTank.getFluid();
+            // Parse fluid filter with registry access from the world
+            FluidStack filterFluid = getFluidFilter(world.registryAccess());
+            boolean fluid_match = filterFluid.isEmpty()
+                    || FluidStack.isSameFluidSameComponents(filterFluid, ladleFluid);
 
             boolean filled_match = true;
 

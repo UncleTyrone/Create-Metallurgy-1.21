@@ -6,7 +6,7 @@ import com.simibubi.create.compat.jei.category.CreateRecipeCategory;
 import com.simibubi.create.content.processing.burner.BlazeBurnerBlock;
 import com.simibubi.create.content.processing.recipe.HeatCondition;
 import com.simibubi.create.content.processing.recipe.ProcessingOutput;
-import com.simibubi.create.foundation.fluid.FluidIngredient;
+import net.neoforged.neoforge.fluids.crafting.SizedFluidIngredient;
 import com.simibubi.create.foundation.gui.AllGuiTextures;
 import com.simibubi.create.foundation.item.ItemHelper;
 import com.simibubi.create.foundation.utility.CreateLang;
@@ -20,7 +20,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Ingredient;
-import net.minecraftforge.fluids.FluidStack;
+import net.neoforged.neoforge.fluids.FluidStack;
 import org.apache.commons.lang3.mutable.MutableInt;
 
 import java.util.ArrayList;
@@ -57,7 +57,7 @@ public class FoundryBasinCategory extends CreateRecipeCategory<FoundryBasinRecip
                     .addItemStacks(stacks);
             i++;
         }
-        for (FluidIngredient fluidIngredient : recipe.getFluidIngredients()) {
+        for (SizedFluidIngredient fluidIngredient : recipe.getFluidIngredients()) {
             int x = 17 + xOffset + (i % 3) * 19;
             int y = 51 - (i / 3) * 19;
             addFluidSlot(builder, x, y, fluidIngredient);

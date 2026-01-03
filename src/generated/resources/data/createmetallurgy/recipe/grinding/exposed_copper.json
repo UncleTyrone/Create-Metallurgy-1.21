@@ -1,0 +1,15 @@
+{
+  "id": "createmetallurgy:grinding/exposed_copper",
+  "type": "createmetallurgy:grinding",
+  "ingredients": [
+    {
+      "item": "minecraft:exposed_copper"
+    }
+  ],
+  "processingTime": 50,
+  "results": [
+    {
+      "id": "minecraft:copper_block"
+    }
+  ]
+}

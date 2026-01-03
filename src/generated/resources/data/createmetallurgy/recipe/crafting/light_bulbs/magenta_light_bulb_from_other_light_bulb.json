@@ -1,0 +1,16 @@
+{
+  "id": "createmetallurgy:crafting/light_bulbs/magenta_light_bulb_from_other_light_bulb",
+  "type": "minecraft:crafting_shapeless",
+  "category": "redstone",
+  "ingredients": [
+    {
+      "tag": "c:dyes/magenta"
+    },
+    {
+      "tag": "createmetallurgy:light_bulb"
+    }
+  ],
+  "result": {
+    "id": "createmetallurgy:magenta_light_bulb"
+  }
+}

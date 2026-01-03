@@ -1,0 +1,26 @@
+{
+  "id": "createmetallurgy:melting/obdurium/rod",
+  "type": "createmetallurgy:melting",
+  "conditions": [
+    {
+      "type": "neoforge:not",
+      "value": {
+        "type": "neoforge:tag_empty",
+        "tag": "c:rods/obdurium"
+      }
+    }
+  ],
+  "heatRequirement": "superheated",
+  "ingredients": [
+    {
+      "tag": "c:rods/obdurium"
+    }
+  ],
+  "processingTime": 20,
+  "results": [
+    {
+      "amount": 45,
+      "fluid": "createmetallurgy:molten_obdurium"
+    }
+  ]
+}

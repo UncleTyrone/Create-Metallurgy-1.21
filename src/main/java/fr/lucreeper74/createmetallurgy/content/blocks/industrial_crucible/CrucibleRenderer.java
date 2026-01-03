@@ -3,13 +3,12 @@ package fr.lucreeper74.createmetallurgy.content.blocks.industrial_crucible;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.simibubi.create.foundation.blockEntity.renderer.SafeBlockEntityRenderer;
-import com.simibubi.create.foundation.fluid.FluidRenderer;
 import dev.engine_room.flywheel.lib.transform.PoseTransformStack;
 import dev.engine_room.flywheel.lib.transform.TransformStack;
 import fr.lucreeper74.createmetallurgy.content.blocks.industrial_crucible.foundry.FoundryTank;
 import fr.lucreeper74.createmetallurgy.registries.CMPartialModels;
 import net.createmod.catnip.data.Iterate;
-import net.createmod.catnip.platform.ForgeCatnipServices;
+import fr.lucreeper74.createmetallurgy.utils.ColoredFluidRenderer;
 import net.createmod.catnip.render.CachedBuffers;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -21,17 +20,18 @@ import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraftforge.fluids.FluidStack;
+import net.neoforged.neoforge.fluids.FluidStack;
 
 import java.util.Random;
 
 public class CrucibleRenderer extends SafeBlockEntityRenderer<CrucibleBlockEntity> {
 
-    public CrucibleRenderer(BlockEntityRendererProvider.Context context) {}
+    public CrucibleRenderer(BlockEntityRendererProvider.Context context) {
+    }
 
     @Override
     protected void renderSafe(CrucibleBlockEntity be, float partialTicks, PoseStack ms, MultiBufferSource buffer,
-                              int light, int overlay) {
+            int light, int overlay) {
         if (!be.isController())
             return;
         if (be.foundry.isActive()) {
@@ -78,15 +78,17 @@ public class CrucibleRenderer extends SafeBlockEntityRenderer<CrucibleBlockEntit
             float zMax = zMin + be.width - 2 * tankHullWidth;
 
             ms.pushPose();
-            ForgeCatnipServices.FLUID_RENDERER.renderFluidBox(fluidStack, xMin, yMin, zMin, xMax, yMax, zMax, buffer, ms, light, false, true);
+            ColoredFluidRenderer.renderFluidBox(fluidStack, xMin, yMin, zMin, xMax, yMax, zMax, buffer, ms, light,
+                    ColoredFluidRenderer.RGBAtoColor(255, 255, 255, 255), true);
             ms.popPose();
 
             yMin = yMax; // To stack fluids upwards
         }
     }
 
-    protected void renderAsController(CrucibleBlockEntity be, float partialTicks, PoseStack ms, MultiBufferSource buffer,
-                                      int light, int overlay) {
+    protected void renderAsController(CrucibleBlockEntity be, float partialTicks, PoseStack ms,
+            MultiBufferSource buffer,
+            int light, int overlay) {
         BlockState blockState = be.getBlockState();
         VertexConsumer vb = buffer.getBuffer(RenderType.solid());
         ms.pushPose();
@@ -129,7 +131,7 @@ public class CrucibleRenderer extends SafeBlockEntityRenderer<CrucibleBlockEntit
     }
 
     protected void renderItems(CrucibleBlockEntity be, float partialTicks, PoseStack ms, MultiBufferSource buffer,
-                               int light, int overlay) {
+            int light, int overlay) {
         int tankIndex = 0;
         CrucibleBlockEntity controllerBE = be.getControllerBE();
 
@@ -149,7 +151,8 @@ public class CrucibleRenderer extends SafeBlockEntityRenderer<CrucibleBlockEntit
 
                         Minecraft mc = Minecraft.getInstance();
                         mc.getItemRenderer()
-                                .renderStatic(stack, ItemDisplayContext.GROUND, light, overlay, ms, buffer, mc.level, 0);
+                                .renderStatic(stack, ItemDisplayContext.GROUND, light, overlay, ms, buffer, mc.level,
+                                        0);
                         ms.popPose();
                     }
                     tankIndex++;

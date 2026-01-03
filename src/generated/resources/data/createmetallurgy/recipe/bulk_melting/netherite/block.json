@@ -1,0 +1,27 @@
+{
+  "id": "createmetallurgy:bulk_melting/netherite/block",
+  "type": "createmetallurgy:bulk_melting",
+  "conditions": [
+    {
+      "type": "neoforge:not",
+      "value": {
+        "type": "neoforge:tag_empty",
+        "tag": "c:storage_blocks/netherite"
+      }
+    }
+  ],
+  "ingredients": [
+    {
+      "tag": "c:storage_blocks/netherite"
+    }
+  ],
+  "maxHeatRequirement": 50,
+  "minHeatRequirement": 17,
+  "processingTime": 224,
+  "results": [
+    {
+      "amount": 810,
+      "fluid": "createmetallurgy:molten_netherite"
+    }
+  ]
+}

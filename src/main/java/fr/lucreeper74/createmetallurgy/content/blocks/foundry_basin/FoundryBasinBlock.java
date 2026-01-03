@@ -1,6 +1,5 @@
 package fr.lucreeper74.createmetallurgy.content.blocks.foundry_basin;
 
-import com.simibubi.create.content.equipment.wrench.IWrenchable;
 import com.simibubi.create.content.processing.basin.BasinBlock;
 import fr.lucreeper74.createmetallurgy.registries.CMBlockEntityTypes;
 import fr.lucreeper74.createmetallurgy.registries.CMBlocks;
@@ -9,9 +8,9 @@ import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.block.entity.BlockEntityType;
-import net.minecraftforge.items.ItemHandlerHelper;
+import net.neoforged.neoforge.items.ItemHandlerHelper;
 
-public class FoundryBasinBlock extends BasinBlock implements IWrenchable {
+public class FoundryBasinBlock extends BasinBlock {
     public FoundryBasinBlock(Properties p_i48440_1_) {
         super(p_i48440_1_);
     }

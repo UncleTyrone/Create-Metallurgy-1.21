@@ -14,7 +14,6 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.Level;
-import net.minecraftforge.network.NetworkHooks;
 import org.jetbrains.annotations.Nullable;
 
 import javax.annotation.Nonnull;
@@ -44,9 +43,7 @@ public class LadleFilterItem extends Item implements MenuProvider, ItemCopyingRe
 
         if (!player.isShiftKeyDown() && hand == InteractionHand.MAIN_HAND) {
             if (!world.isClientSide && player instanceof ServerPlayer serverPlayer)
-                NetworkHooks.openScreen(serverPlayer, this, buf -> {
-                    buf.writeItem(heldItem);
-                });
+                serverPlayer.openMenu(this, buf -> ItemStack.STREAM_CODEC.encode(buf, heldItem));
             return InteractionResultHolder.success(heldItem);
         }
         return InteractionResultHolder.pass(heldItem);
@@ -56,5 +53,10 @@ public class LadleFilterItem extends Item implements MenuProvider, ItemCopyingRe
     public @Nullable AbstractContainerMenu createMenu(int id, Inventory inv, Player player) {
         ItemStack heldItem = player.getMainHandItem();
         return LadleFilterMenu.create(id, inv, heldItem);
+    }
+
+    @Override
+    public net.minecraft.core.component.DataComponentType<?> getComponentType() {
+        return net.minecraft.core.component.DataComponents.CUSTOM_DATA;
     }
 }

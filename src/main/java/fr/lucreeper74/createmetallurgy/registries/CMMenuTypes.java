@@ -12,7 +12,9 @@ import net.minecraft.world.inventory.AbstractContainerMenu;
 
 public class CMMenuTypes {
     public static final MenuEntry<LadleFilterMenu> LADLE_FILTER =
-            register("ladle_filter", LadleFilterMenu::new, () -> LadleFilterScreen::new);
+            register("ladle_filter", 
+                    (type, id, inv, buf) -> new LadleFilterMenu(type, id, inv, buf),
+                    () -> (MenuBuilder.ScreenFactory<LadleFilterMenu, LadleFilterScreen>) LadleFilterScreen::new);
 
     private static <C extends AbstractContainerMenu, S extends Screen & MenuAccess<C>> MenuEntry<C> register(
             String name, MenuBuilder.ForgeMenuFactory<C> factory, NonNullSupplier<MenuBuilder.ScreenFactory<C, S>> screenFactory) {

@@ -6,7 +6,6 @@ import com.simibubi.create.content.kinetics.belt.behaviour.DirectBeltInputBehavi
 import com.simibubi.create.foundation.blockEntity.IMultiBlockEntityContainer;
 import com.simibubi.create.foundation.blockEntity.SmartBlockEntity;
 import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour;
-import com.simibubi.create.foundation.fluid.FluidIngredient;
 import com.simibubi.create.foundation.item.SmartInventory;
 import com.simibubi.create.foundation.recipe.RecipeConditions;
 import com.simibubi.create.foundation.recipe.RecipeFinder;
@@ -22,45 +21,40 @@ import net.createmod.catnip.lang.LangBuilder;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtUtils;
 import net.minecraft.network.chat.Component;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.item.crafting.Recipe;
+import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
-import net.minecraftforge.common.capabilities.Capability;
-import net.minecraftforge.common.capabilities.ForgeCapabilities;
-import net.minecraftforge.common.util.LazyOptional;
-import net.minecraftforge.fluids.FluidStack;
-import net.minecraftforge.fluids.FluidType;
-import net.minecraftforge.fluids.capability.IFluidHandler;
-import net.minecraftforge.fluids.capability.templates.FluidTank;
-import net.minecraftforge.items.IItemHandlerModifiable;
+import net.neoforged.neoforge.fluids.FluidStack;
+import net.neoforged.neoforge.fluids.FluidType;
+import net.neoforged.neoforge.fluids.capability.IFluidHandler;
+import net.neoforged.neoforge.fluids.capability.templates.FluidTank;
+import net.neoforged.neoforge.fluids.crafting.SizedFluidIngredient;
+import net.neoforged.neoforge.items.IItemHandlerModifiable;
 
 import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import java.util.List;
 import java.util.Objects;
-import java.util.function.Predicate;
 
 import static fr.lucreeper74.createmetallurgy.content.fluids.MoltenFluidType.MOLTEN_FLUID_BURNING_TIME;
 
-public class CrucibleBlockEntity extends SmartBlockEntity implements IHaveGoggleInformation, IMultiBlockEntityContainer {
+public class CrucibleBlockEntity extends SmartBlockEntity
+        implements IHaveGoggleInformation, IMultiBlockEntityContainer {
     public static final int MAX_SIZE = 5;
     private static final int MAX_HEIGHT = 4;
     private static final int CAPACITY_FACTOR = 1000;
 
     protected FoundryTank tankInventory;
-    protected LazyOptional<IFluidHandler> fluidCapability;
-    protected LazyOptional<IItemHandlerModifiable> itemCapability;
 
     protected boolean updateConnectivity;
-    protected boolean updateCapability;
     protected int luminosity;
     protected BlockPos controller;
     protected BlockPos lastKnownPos;
@@ -78,13 +72,9 @@ public class CrucibleBlockEntity extends SmartBlockEntity implements IHaveGoggle
         foundry = new FoundryData();
         tankInventory = createTank();
         foundry.createInventory(this, getMaxWidth() * getMaxWidth() * getMaxHeight());
-        fluidCapability = LazyOptional.of(() -> tankInventory);
-        itemCapability = LazyOptional.of(() -> foundry.inputInv);
         updateConnectivity = false;
-        updateCapability = false;
         height = 1;
         width = 1;
-        refreshCapability();
     }
 
     @Override
@@ -105,8 +95,8 @@ public class CrucibleBlockEntity extends SmartBlockEntity implements IHaveGoggle
     }
 
     @Override
-    protected void read(CompoundTag compound, boolean clientPacket) {
-        super.read(compound, clientPacket);
+    protected void read(CompoundTag compound, HolderLookup.Provider registries, boolean clientPacket) {
+        super.read(compound, registries, clientPacket);
 
         BlockPos controllerBefore = controller;
         int prevSize = width;
@@ -119,21 +109,22 @@ public class CrucibleBlockEntity extends SmartBlockEntity implements IHaveGoggle
         lastKnownPos = null;
 
         if (compound.contains("LastKnownPos"))
-            lastKnownPos = NbtUtils.readBlockPos(compound.getCompound("LastKnownPos"));
+            lastKnownPos = NbtUtils.readBlockPos(compound, "LastKnownPos").orElse(null);
         if (compound.contains("Controller"))
-            controller = NbtUtils.readBlockPos(compound.getCompound("Controller"));
+            controller = NbtUtils.readBlockPos(compound, "Controller").orElse(null);
 
         if (isController()) {
             width = compound.getInt("Size");
             height = compound.getInt("Height");
             tankInventory.setCapacity(getTotalSize() * CAPACITY_FACTOR);
-            tankInventory.deserializeNBT(compound.getCompound("TankContent"));
+            tankInventory.deserializeNBT(compound.getCompound("TankContent"), registries);
 
             foundry.inputInv.setFirstLimitedSlot(getTotalSize());
             foundry.inputInv.deserializeNBT(compound.getCompound("MeltingInv"));
 
             if (tankInventory.getFillState() > 1)
-                tankInventory.drain(-(tankInventory.getCapacity() - tankInventory.getFillAmount()), IFluidHandler.FluidAction.EXECUTE);
+                tankInventory.drain(-(tankInventory.getCapacity() - tankInventory.getFillAmount()),
+                        IFluidHandler.FluidAction.EXECUTE);
         }
         if (luminosity != prevLum && hasLevel())
             level.getChunkSource()
@@ -141,8 +132,6 @@ public class CrucibleBlockEntity extends SmartBlockEntity implements IHaveGoggle
                     .checkBlock(worldPosition);
 
         foundry.read(compound.getCompound("Ladle"));
-
-        updateCapability = true;
 
         if (!clientPacket)
             return;
@@ -160,7 +149,7 @@ public class CrucibleBlockEntity extends SmartBlockEntity implements IHaveGoggle
     }
 
     @Override
-    public void write(CompoundTag compound, boolean clientPacket) {
+    public void write(CompoundTag compound, HolderLookup.Provider registries, boolean clientPacket) {
         if (updateConnectivity)
             compound.putBoolean("Uninitialized", true);
         compound.put("Ladle", foundry.write());
@@ -169,7 +158,7 @@ public class CrucibleBlockEntity extends SmartBlockEntity implements IHaveGoggle
             compound.put("LastKnownPos", NbtUtils.writeBlockPos(lastKnownPos));
 
         if (isController()) {
-            compound.put("TankContent", tankInventory.serializeNBT(new CompoundTag()));
+            compound.put("TankContent", tankInventory.serializeNBT(new CompoundTag(), registries));
             compound.put("MeltingInv", foundry.inputInv.serializeNBT());
             compound.putInt("Size", width);
             compound.putInt("Height", height);
@@ -177,19 +166,15 @@ public class CrucibleBlockEntity extends SmartBlockEntity implements IHaveGoggle
             compound.put("Controller", NbtUtils.writeBlockPos(controller));
         }
         compound.putInt("Luminosity", luminosity);
-        super.write(compound, clientPacket);
+        super.write(compound, registries, clientPacket);
     }
 
-    @Nonnull
-    @Override
-    public <T> LazyOptional<T> getCapability(@Nonnull Capability<T> cap, @Nullable Direction side) {
-        if (cap == ForgeCapabilities.ITEM_HANDLER)
-            return itemCapability.cast();
-        if (!fluidCapability.isPresent())
-            refreshCapability();
-        if (cap == ForgeCapabilities.FLUID_HANDLER)
-            return fluidCapability.cast();
-        return super.getCapability(cap, side);
+    public IFluidHandler getFluidHandler() {
+        return handlerForFluidCapability();
+    }
+
+    public IItemHandlerModifiable getItemHandler() {
+        return handlerForItemCapability();
     }
 
     protected void updateConnectivity() {
@@ -218,10 +203,6 @@ public class CrucibleBlockEntity extends SmartBlockEntity implements IHaveGoggle
             return;
         }
 
-        if (updateCapability) {
-            updateCapability = false;
-            refreshCapability();
-        }
         if (updateConnectivity)
             updateConnectivity();
 
@@ -229,7 +210,6 @@ public class CrucibleBlockEntity extends SmartBlockEntity implements IHaveGoggle
             foundry.tick(this);
         }
     }
-
 
     @Override
     public BlockPos getLastKnownPos() {
@@ -263,13 +243,17 @@ public class CrucibleBlockEntity extends SmartBlockEntity implements IHaveGoggle
                         shape = CrucibleBlock.Shape.PLAIN;
 
                     if (width != 1)
-                        shape = xOffset == 0 ? zOffset == 0 ? CrucibleBlock.Shape.NW :
-                                zOffset == width - 1 ? CrucibleBlock.Shape.SW : CrucibleBlock.Shape.WEST :
+                        shape = xOffset == 0
+                                ? zOffset == 0 ? CrucibleBlock.Shape.NW
+                                        : zOffset == width - 1 ? CrucibleBlock.Shape.SW : CrucibleBlock.Shape.WEST
+                                :
 
-                                xOffset == width - 1 ? zOffset == 0 ? CrucibleBlock.Shape.NE :
-                                        zOffset == width - 1 ? CrucibleBlock.Shape.SE : CrucibleBlock.Shape.EAST :
+                                xOffset == width - 1 ? zOffset == 0 ? CrucibleBlock.Shape.NE
+                                        : zOffset == width - 1 ? CrucibleBlock.Shape.SE : CrucibleBlock.Shape.EAST :
 
-                                        zOffset == 0 ? CrucibleBlock.Shape.NORTH : zOffset == width - 1 ? CrucibleBlock.Shape.SOUTH : CrucibleBlock.Shape.INNER;
+                                        zOffset == 0 ? CrucibleBlock.Shape.NORTH
+                                                : zOffset == width - 1 ? CrucibleBlock.Shape.SOUTH
+                                                        : CrucibleBlock.Shape.INNER;
 
                     level.setBlock(pos, blockState.setValue(CrucibleBlock.SHAPE, shape), 22);
                     level.getChunkSource()
@@ -280,24 +264,17 @@ public class CrucibleBlockEntity extends SmartBlockEntity implements IHaveGoggle
         }
     }
 
-    private void refreshCapability() {
-        LazyOptional<IFluidHandler> oldFCap = fluidCapability;
-        fluidCapability = LazyOptional.of(this::handlerForFluidCapability);
-        oldFCap.invalidate();
-
-        LazyOptional<IItemHandlerModifiable> oldICap = itemCapability;
-        itemCapability = LazyOptional.of(this::handlerForItemCapability);
-        oldICap.invalidate();
-    }
-
+    @Nonnull
     private IFluidHandler handlerForFluidCapability() {
         return isController() ? tankInventory
                 : getControllerBE() != null ? getControllerBE().handlerForFluidCapability() : new FluidTank(0);
     }
 
+    @Nonnull
     private IItemHandlerModifiable handlerForItemCapability() {
         return isController() ? foundry.inputInv
-                : getControllerBE() != null ? getControllerBE().handlerForItemCapability() : new SmartInventory(0, this, 0, false);
+                : getControllerBE() != null ? getControllerBE().handlerForItemCapability()
+                        : new SmartInventory(0, this, 0, false);
     }
 
     @Override
@@ -349,14 +326,14 @@ public class CrucibleBlockEntity extends SmartBlockEntity implements IHaveGoggle
         sendData();
     }
 
-    @SuppressWarnings("unchecked")
     @Override
+    @SuppressWarnings("unchecked")
     public CrucibleBlockEntity getControllerBE() {
         if (isController())
             return this;
         BlockEntity blockEntity = level.getBlockEntity(controller);
-        if (blockEntity instanceof CrucibleBlockEntity)
-            return (CrucibleBlockEntity) blockEntity;
+        if (blockEntity instanceof CrucibleBlockEntity crucibleBE)
+            return crucibleBE;
         return null;
     }
 
@@ -367,7 +344,6 @@ public class CrucibleBlockEntity extends SmartBlockEntity implements IHaveGoggle
         if (overflow > 0)
             tankInventory.drain(overflow, IFluidHandler.FluidAction.EXECUTE);
     }
-
 
     @Override
     public boolean isController() {
@@ -403,7 +379,6 @@ public class CrucibleBlockEntity extends SmartBlockEntity implements IHaveGoggle
         if (controller.equals(this.controller))
             return;
         this.controller = controller;
-        refreshCapability();
         setChanged();
         sendData();
     }
@@ -437,20 +412,20 @@ public class CrucibleBlockEntity extends SmartBlockEntity implements IHaveGoggle
 
         EntityMeltingRecipe recipe = null;
 
-        Predicate<Recipe<?>> type = RecipeConditions.isOfType(CMRecipeTypes.ENTITY_MELTING.getType());
-        List<Recipe<?>> recipes = RecipeFinder.get(EntityMeltingCacheKey, level, type).stream()
-                .filter(r -> r instanceof EntityMeltingRecipe entityRecipe
+        List<RecipeHolder<?>> recipes = RecipeFinder.get(EntityMeltingCacheKey, level,
+                RecipeConditions.isOfType(CMRecipeTypes.ENTITY_MELTING.getType())).stream()
+                .filter(r -> r.value() instanceof EntityMeltingRecipe entityRecipe
                         && entityRecipe.matches(this, entityIn.getType())
                         && FoundryRecipe.isEnoughHeated(this, entityRecipe))
                 .toList();
 
         if (!recipes.isEmpty())
-            recipe = (EntityMeltingRecipe) recipes.get(0);
+            recipe = (EntityMeltingRecipe) recipes.get(0).value();
 
         boolean isFireImmune = entityIn.fireImmune();
 
         if (!isFireImmune && foundry.getCurrentHeat() > 0)
-            entityIn.setSecondsOnFire(MOLTEN_FLUID_BURNING_TIME);
+            entityIn.igniteForSeconds(MOLTEN_FLUID_BURNING_TIME);
 
         if (recipe != null) {
             if (entityIn.hurt(CMDamageTypes.foundry(level), recipe.getEntityIngredient().getDamage()))
@@ -465,15 +440,14 @@ public class CrucibleBlockEntity extends SmartBlockEntity implements IHaveGoggle
     }
 
     private void applyRecipe(EntityMeltingRecipe recipe) {
-        Ingredient:
-        for (FluidIngredient fluidIngredient : recipe.getFluidIngredients()) {
-            int amountRequired = fluidIngredient.getRequiredAmount();
+        Ingredient: for (SizedFluidIngredient fluidIngredient : recipe.getFluidIngredients()) {
+            int amountRequired = fluidIngredient.amount();
 
             for (int i = 0; i < getTank().getTanks(); i++) {
                 FluidStack availableFluid = getTank().getFluidInTank(i).copy();
                 int availableAmount = availableFluid.getAmount();
 
-                if (fluidIngredient.test(availableFluid) && fluidIngredient.getRequiredAmount() <= availableAmount) {
+                if (fluidIngredient.test(availableFluid) && fluidIngredient.amount() <= availableAmount) {
                     availableFluid.setAmount(Math.min(amountRequired, availableAmount));
                     getTank().drain(availableFluid, IFluidHandler.FluidAction.EXECUTE);
                     continue Ingredient;
@@ -528,7 +502,6 @@ public class CrucibleBlockEntity extends SmartBlockEntity implements IHaveGoggle
         return MAX_SIZE;
     }
 
-
     public int getMaxHeight() {
         return MAX_HEIGHT;
     }
@@ -579,7 +552,6 @@ public class CrucibleBlockEntity extends SmartBlockEntity implements IHaveGoggle
 
         CMLang.translate("crucible.capacity").style(ChatFormatting.GRAY).forGoggles(tooltip);
 
-
         FoundryTank tank = controllerBE.getTank();
         LangBuilder mb = CreateLang.translate("generic.unit.millibuckets");
 
@@ -613,7 +585,10 @@ public class CrucibleBlockEntity extends SmartBlockEntity implements IHaveGoggle
                             .forGoggles(tooltip, 1);
                 }
         } else
-            tooltip.add(CMLang.translateDirect("crucible.hold_details", Component.translatable("create.tooltip.keyShift").withStyle(ChatFormatting.GRAY)).withStyle(ChatFormatting.DARK_GRAY));
+            tooltip.add(CMLang
+                    .translateDirect("crucible.hold_details",
+                            Component.translatable("create.tooltip.keyShift").withStyle(ChatFormatting.GRAY))
+                    .withStyle(ChatFormatting.DARK_GRAY));
 
         return true;
     }

@@ -1,0 +1,18 @@
+{
+  "id": "createmetallurgy:casting_in_table/iron/ingot",
+  "type": "createmetallurgy:casting_in_table",
+  "ingredients": [
+    {
+      "item": "createmetallurgy:graphite_ingot_mold"
+    },
+    {
+      "amount": 90,
+      "fluid": "createmetallurgy:molten_iron",
+      "nbt": {}
+    }
+  ],
+  "processingTime": 60,
+  "result": {
+    "id": "minecraft:iron_ingot"
+  }
+}

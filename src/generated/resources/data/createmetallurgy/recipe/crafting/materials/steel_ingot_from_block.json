@@ -1,0 +1,14 @@
+{
+  "id": "createmetallurgy:crafting/materials/steel_ingot_from_block",
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "createmetallurgy:steel_block"
+    }
+  ],
+  "result": {
+    "count": 9,
+    "id": "createmetallurgy:steel_ingot"
+  }
+}

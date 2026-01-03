@@ -3,8 +3,8 @@ package fr.lucreeper74.createmetallurgy.content.blocks.foundry_basin;
 import com.simibubi.create.content.processing.basin.BasinBlockEntity;
 import com.simibubi.create.content.processing.basin.BasinOperatingBlockEntity;
 import net.minecraft.core.BlockPos;
-import net.minecraft.world.Container;
 import net.minecraft.world.item.crafting.Recipe;
+import net.minecraft.world.item.crafting.RecipeInput;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 
@@ -39,8 +39,9 @@ public abstract class FoundryBasinOperatingBE extends BasinOperatingBlockEntity 
         basin.notifyChangeOfContents();
     }
 
-    @Override
-    protected <C extends Container> boolean matchBasinRecipe(Recipe<C> recipe) {
+// Note: matchBasinRecipe signature changed in Create 6.0 - using RecipeInput
+// instead of Container
+protected <I extends RecipeInput> boolean matchBasinRecipe(Recipe<I> recipe) {
         if (recipe == null)
             return false;
         Optional<BasinBlockEntity> basin = getBasin();

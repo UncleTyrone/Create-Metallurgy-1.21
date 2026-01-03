@@ -6,18 +6,17 @@ import com.simibubi.create.foundation.recipe.RecipeFinder;
 import fr.lucreeper74.createmetallurgy.content.blocks.industrial_crucible.CrucibleBlockEntity;
 import fr.lucreeper74.createmetallurgy.content.blocks.industrial_crucible.foundry.recipes.FoundryRecipe;
 import fr.lucreeper74.createmetallurgy.registries.CMRecipeTypes;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.util.Mth;
 import net.minecraft.world.inventory.ContainerData;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.crafting.Recipe;
+import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.level.Level;
-import net.minecraftforge.common.capabilities.ForgeCapabilities;
-import net.minecraftforge.fluids.FluidStack;
-import net.minecraftforge.fluids.capability.IFluidHandler;
+import net.neoforged.neoforge.fluids.FluidStack;
+import net.neoforged.neoforge.fluids.capability.IFluidHandler;
 
 import java.util.List;
-import java.util.function.Predicate;
 
 import static fr.lucreeper74.createmetallurgy.content.blocks.industrial_crucible.foundry.recipes.FoundryRecipe.matchSpecific;
 
@@ -25,7 +24,7 @@ public class MeltingSlot implements ContainerData {
 
     private ItemStack stack;
     private final CrucibleBlockEntity be;
-    public ProcessingRecipe<?> currentRecipe;
+    public ProcessingRecipe<?, ?> currentRecipe;
     public int processingTime;
     public int processDuration;
 
@@ -46,10 +45,11 @@ public class MeltingSlot implements ContainerData {
     }
 
     private void startRecipe() {
-        ProcessingRecipe<?> recipe = getMatchingRecipe();
+        ProcessingRecipe<?, ?> recipe = getMatchingRecipe();
         if (recipe != null) {
             int duration = recipe.getProcessingDuration();
-            float speed = Mth.clamp((float) be.foundry.getCurrentHeat() / (FoundryRecipe.getHeatRequirement(recipe)), 1f, 3f);
+            float speed = Mth.clamp((float) be.foundry.getCurrentHeat() / (FoundryRecipe.getHeatRequirement(recipe)),
+                    1f, 3f);
 
             processingTime = (int) (duration / speed);
             processDuration = processingTime;
@@ -95,8 +95,9 @@ public class MeltingSlot implements ContainerData {
         if (currentRecipe == null)
             return;
 
-        IFluidHandler fluidHandler = be.getCapability(ForgeCapabilities.FLUID_HANDLER)
-                .orElse(null);
+        IFluidHandler fluidHandler = be.getTank();
+        if (fluidHandler == null)
+            return;
 
         for (FluidStack output : currentRecipe.getFluidResults()) {
             if (fluidHandler.fill(output.copy(), IFluidHandler.FluidAction.SIMULATE) >= output.getAmount()) {
@@ -107,21 +108,19 @@ public class MeltingSlot implements ContainerData {
         }
     }
 
-    private ProcessingRecipe<?> getMatchingRecipe() {
+    private ProcessingRecipe<?, ?> getMatchingRecipe() {
         Level level = be.getLevel();
         if (level == null)
             return null;
 
-        Predicate<Recipe<?>> type = RecipeConditions.isOfType(CMRecipeTypes.BULK_MELTING.getType(), CMRecipeTypes.MELTING.getType());
-        List<Recipe<?>> recipes = RecipeFinder.get(BulkMeltingCacheKey, level, type).stream()
-                .filter(r -> matchSpecific(getStack(), r))
-                .sorted((r1, r2) -> r2.getIngredients()
-                        .size()
-                        - r1.getIngredients()
-                        .size())
+        List<RecipeHolder<?>> recipes = RecipeFinder.get(BulkMeltingCacheKey, level,
+                RecipeConditions.isOfType(CMRecipeTypes.BULK_MELTING.getType(), CMRecipeTypes.MELTING.getType()))
+                .stream()
+                .filter(r -> matchSpecific(getStack(), r.value()))
+                .sorted((r1, r2) -> r2.value().getIngredients().size() - r1.value().getIngredients().size())
                 .toList();
         if (!recipes.isEmpty())
-            return (ProcessingRecipe<?>) recipes.get(0);
+            return (ProcessingRecipe<?, ?>) recipes.get(0).value();
         return null;
     }
 
@@ -139,15 +138,29 @@ public class MeltingSlot implements ContainerData {
         return 0;
     }
 
+    public void deserializeNBT(CompoundTag nbt, HolderLookup.Provider provider) {
+        stack = ItemStack.parseOptional(provider, nbt.getCompound("stack"));
+        processingTime = nbt.getInt("processingTime");
+        processDuration = nbt.getInt("processDuration");
+    }
+
+    public CompoundTag serializeNBT(HolderLookup.Provider provider) {
+        CompoundTag nbt = new CompoundTag();
+        nbt.put("stack", stack.saveOptional(provider));
+        nbt.putInt("processingTime", processingTime);
+        nbt.putInt("processDuration", processDuration);
+        return nbt;
+    }
+
+    // Legacy methods for compatibility - will need provider from caller
     public void deserializeNBT(CompoundTag nbt) {
-        stack = ItemStack.of(nbt.getCompound("stack"));
+        // This requires a provider - caller should use the HolderLookup version
         processingTime = nbt.getInt("processingTime");
         processDuration = nbt.getInt("processDuration");
     }
 
     public CompoundTag serializeNBT() {
         CompoundTag nbt = new CompoundTag();
-        nbt.put("stack", stack.save(new CompoundTag()));
         nbt.putInt("processingTime", processingTime);
         nbt.putInt("processDuration", processDuration);
         return nbt;

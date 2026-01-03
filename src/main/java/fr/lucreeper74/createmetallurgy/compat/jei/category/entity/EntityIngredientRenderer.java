@@ -1,7 +1,6 @@
 package fr.lucreeper74.createmetallurgy.compat.jei.category.entity;
 
 
-import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import fr.lucreeper74.createmetallurgy.content.blocks.industrial_crucible.foundry.recipes.EntityIngredient;
 import mezz.jei.api.ingredients.IIngredientRenderer;
@@ -12,8 +11,8 @@ import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.item.TooltipFlag;
-import net.minecraftforge.registries.ForgeRegistries;
 import org.jetbrains.annotations.NotNull;
 import org.joml.Quaternionf;
 
@@ -35,18 +34,16 @@ public record EntityIngredientRenderer(int scale) implements IIngredientRenderer
             Entity entity = entityInput.type().create(level);
 
             if (entity instanceof LivingEntity livingEntity) { // No recipes with Non-living entity anyway
-                int entityScale = scale;
+                float entityScale = scale;
                 float maxSize = entity.getBbHeight() + entity.getBbWidth();
                 entityScale /= maxSize;
 
-                PoseStack modelView = RenderSystem.getModelViewStack();
-                modelView.pushPose();
-                modelView.mulPoseMatrix(matrixStack.last().pose());
-                Quaternionf angle = (new Quaternionf()).rotationXYZ(0, ((float) Math.PI/180f) * 160f, (float) Math.PI);
+                Quaternionf rotation1 = (new Quaternionf()).rotationY(((float) Math.PI/180f) * 160f);
+                Quaternionf rotation2 = (new Quaternionf()).rotationZ((float) Math.PI);
                 livingEntity.setYHeadRot(0);
-                renderEntityInInventory(graphics, -15, 25, entityScale, angle, null, livingEntity);
-                modelView.popPose();
-                RenderSystem.applyModelViewMatrix();
+                // Minecraft 1.21 renderEntityInInventory signature: (GuiGraphics, float, float, float, Vector3f, Quaternionf, Quaternionf, LivingEntity)
+                org.joml.Vector3f translation = new org.joml.Vector3f(0, 0, 0);
+                renderEntityInInventory(graphics, -15f, 25f, entityScale, translation, rotation1, rotation2, livingEntity);
             }
         }
         matrixStack.popPose();
@@ -57,7 +54,7 @@ public record EntityIngredientRenderer(int scale) implements IIngredientRenderer
         List<Component> tooltip = new ArrayList<>();
         tooltip.add(entityInput.type().getDescription());
         if (tooltipFlag.isAdvanced())
-            tooltip.add((Component.literal(ForgeRegistries.ENTITY_TYPES.getKey(entityInput.type()).toString())).withStyle(ChatFormatting.DARK_GRAY));
+            tooltip.add((Component.literal(EntityType.getKey(entityInput.type()).toString())).withStyle(ChatFormatting.DARK_GRAY));
 
         return tooltip;
     }

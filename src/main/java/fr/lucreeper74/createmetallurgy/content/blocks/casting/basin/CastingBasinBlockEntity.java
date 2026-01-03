@@ -1,6 +1,5 @@
 package fr.lucreeper74.createmetallurgy.content.blocks.casting.basin;
 
-import com.simibubi.create.api.equipment.goggles.IHaveGoggleInformation;
 import com.simibubi.create.foundation.utility.CreateLang;
 import fr.lucreeper74.createmetallurgy.content.blocks.casting.CastingBlockEntity;
 import fr.lucreeper74.createmetallurgy.registries.CMRecipeTypes;
@@ -11,19 +10,17 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
-import net.minecraft.world.Container;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.crafting.Recipe;
+import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraftforge.fluids.FluidStack;
-import net.minecraftforge.fluids.capability.IFluidHandler;
-import net.minecraftforge.items.IItemHandlerModifiable;
-import net.minecraftforge.items.ItemStackHandler;
+import net.neoforged.neoforge.fluids.FluidStack;
+import net.neoforged.neoforge.fluids.capability.IFluidHandler;
+import net.neoforged.neoforge.items.IItemHandlerModifiable;
 
 import java.util.List;
 
-public class CastingBasinBlockEntity extends CastingBlockEntity implements IHaveGoggleInformation {
+public class CastingBasinBlockEntity extends CastingBlockEntity {
 
     public CastingBasinBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state) {
         super(type, pos, state);
@@ -38,8 +35,8 @@ public class CastingBasinBlockEntity extends CastingBlockEntity implements IHave
     }
 
     @Override
-    protected <C extends Container> boolean matchStaticFilters(Recipe<C> r) {
-        return r.getType() == CMRecipeTypes.CASTING_IN_BASIN.getType();
+    protected boolean matchStaticFilters(RecipeHolder<?> r) {
+        return r.value().getType() == CMRecipeTypes.CASTING_IN_BASIN.getType();
     }
 
     private static final Object CastingInBasinRecipesKey = new Object();
@@ -56,7 +53,7 @@ public class CastingBasinBlockEntity extends CastingBlockEntity implements IHave
         CMLang.translate("gui.goggles.castingbasin_contents")
                 .forGoggles(tooltip);
 
-        IItemHandlerModifiable items = itemCapability.orElse(new ItemStackHandler());
+        IItemHandlerModifiable items = itemCapability;
         IFluidHandler fluids = getFluidTank();
         boolean isEmpty = true;
 

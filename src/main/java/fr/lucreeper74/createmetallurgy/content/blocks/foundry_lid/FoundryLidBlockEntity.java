@@ -7,13 +7,14 @@ import fr.lucreeper74.createmetallurgy.content.blocks.foundry_basin.FoundryBasin
 import fr.lucreeper74.createmetallurgy.registries.CMRecipeTypes;
 import net.createmod.catnip.math.VecHelper;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.RandomSource;
-import net.minecraft.world.Container;
 import net.minecraft.world.item.crafting.Recipe;
+import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
@@ -24,7 +25,6 @@ import java.util.Optional;
 
 public class FoundryLidBlockEntity extends FoundryBasinOperatingBE {
 
-
     public int processingTime;
     public boolean running;
 
@@ -33,30 +33,31 @@ public class FoundryLidBlockEntity extends FoundryBasinOperatingBE {
     }
 
     @Override
-    protected void write(CompoundTag compound, boolean clientPacket) {
-        super.write(compound, clientPacket);
+    protected void write(CompoundTag compound, HolderLookup.Provider registries, boolean clientPacket) {
+        super.write(compound, registries, clientPacket);
         compound.putInt("MeltingTime", processingTime);
         compound.putBoolean("Running", running);
     }
 
     @Override
-    protected void read(CompoundTag compound, boolean clientPacket) {
-        super.read(compound, clientPacket);
+    protected void read(CompoundTag compound, HolderLookup.Provider registries, boolean clientPacket) {
+        super.read(compound, registries, clientPacket);
         processingTime = compound.getInt("MeltingTime");
         running = compound.getBoolean("Running");
     }
 
     @Override
     protected void onBasinRemoved() {
-        if (!running) return;
+        if (!running)
+            return;
         processingTime = 0;
         currentRecipe = null;
         running = false;
     }
 
     @Override
-    protected <C extends Container> boolean matchStaticFilters(Recipe<C> recipe) {
-        return recipe.getType() == CMRecipeTypes.MELTING.getType();
+    protected boolean matchStaticFilters(RecipeHolder<? extends Recipe<?>> recipe) {
+        return recipe.value().getType() == CMRecipeTypes.MELTING.getType();
     }
 
     @Override
@@ -77,13 +78,15 @@ public class FoundryLidBlockEntity extends FoundryBasinOperatingBE {
 
             RandomSource random = RandomSource.create();
             if (!level.isClientSide && random.nextInt(40) == 0) {
-                level.playSound(null, getBlockPos(), SoundEvents.LAVA_AMBIENT, SoundSource.BLOCKS, .25f, .65f + random.nextFloat() * .1f);
+                level.playSound(null, getBlockPos(), SoundEvents.LAVA_AMBIENT, SoundSource.BLOCKS, .25f,
+                        .65f + random.nextFloat() * .1f);
             }
 
             if (level.isClientSide && processingTime % 2 == 0)
                 spawnParticles();
 
-            if (processingTime > 0) --processingTime;
+            if (processingTime > 0)
+                --processingTime;
         }
     }
 
@@ -134,10 +137,15 @@ public class FoundryLidBlockEntity extends FoundryBasinOperatingBE {
 
     @Override
     public void startProcessingBasin() {
-        if (running && processingTime > 0) return;
+        if (running && processingTime > 0)
+            return;
         super.startProcessingBasin();
         running = true;
-        processingTime = currentRecipe instanceof ProcessingRecipe<?> processed ? processed.getProcessingDuration() : 20;
+        if (currentRecipe instanceof ProcessingRecipe processed) {
+            processingTime = processed.getProcessingDuration();
+        } else {
+            processingTime = 20;
+        }
     }
 
     private static final Object MeltingRecipesKey = new Object();

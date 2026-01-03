@@ -15,25 +15,18 @@ import net.minecraft.client.renderer.MultiBufferSource;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 
-
 @Mixin(ChainConveyorRenderer.class)
 public class LadleRendererChainConveyorMixin {
-    @WrapOperation(
-            method = "renderBox",
-            at = @At(
-                    value = "INVOKE",
-                    target = "Lnet/createmod/catnip/render/SuperByteBuffer;renderInto(Lcom/mojang/blaze3d/vertex/PoseStack;Lcom/mojang/blaze3d/vertex/VertexConsumer;)V"
-            ),
-            remap = false
-    )
-    private void renderFluid(SuperByteBuffer instance, PoseStack ms, VertexConsumer vertexConsumer, Operation<Void> original,
-                             @Local(argsOnly = true) MultiBufferSource buffer,
-                             @Local(argsOnly = true) ChainConveyorPackage box,
-                             @Local(ordinal = 1) SuperByteBuffer boxBuffer,
-                             @Local(ordinal = 1) int light) {
+    @WrapOperation(method = "renderBox", at = @At(value = "INVOKE", target = "Lnet/createmod/catnip/render/SuperByteBuffer;renderInto(Lcom/mojang/blaze3d/vertex/PoseStack;Lcom/mojang/blaze3d/vertex/VertexConsumer;)V"), remap = false)
+    private void renderFluid(SuperByteBuffer instance, PoseStack ms, VertexConsumer vertexConsumer,
+            Operation<Void> original,
+            @Local(argsOnly = true) MultiBufferSource buffer,
+            @Local(argsOnly = true) ChainConveyorPackage box,
+            @Local(ordinal = 1) SuperByteBuffer boxBuffer,
+            @Local(ordinal = 1) int light) {
         if (boxBuffer == instance && box.item.getItem() instanceof LadleItem) {
             ms.pushPose();
-            ms.mulPoseMatrix(instance.getTransforms().last().pose());
+            ms.mulPose(instance.getTransforms().last().pose());
             ms.translate(Translate.CENTER, 0f, Translate.CENTER);
             LadleItemRenderer.renderFluidContents(box.item, -1, ms, buffer, light);
             ms.popPose();

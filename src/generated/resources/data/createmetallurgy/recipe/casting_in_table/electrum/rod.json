@@ -1,0 +1,27 @@
+{
+  "id": "createmetallurgy:casting_in_table/electrum/rod",
+  "type": "createmetallurgy:casting_in_table",
+  "conditions": [
+    {
+      "type": "neoforge:not",
+      "value": {
+        "type": "neoforge:tag_empty",
+        "tag": "c:rods/electrum"
+      }
+    }
+  ],
+  "ingredients": [
+    {
+      "item": "createmetallurgy:graphite_rod_mold"
+    },
+    {
+      "amount": 45,
+      "fluid": "createmetallurgy:molten_electrum",
+      "nbt": {}
+    }
+  ],
+  "processingTime": 30,
+  "result": {
+    "tag": "c:rods/electrum"
+  }
+}

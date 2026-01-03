@@ -1,0 +1,27 @@
+{
+  "id": "createmetallurgy:casting_in_table/void_steel/ingot",
+  "type": "createmetallurgy:casting_in_table",
+  "conditions": [
+    {
+      "type": "neoforge:not",
+      "value": {
+        "type": "neoforge:tag_empty",
+        "tag": "c:ingots/void_steel"
+      }
+    }
+  ],
+  "ingredients": [
+    {
+      "item": "createmetallurgy:graphite_ingot_mold"
+    },
+    {
+      "amount": 90,
+      "fluid": "createmetallurgy:molten_void_steel",
+      "nbt": {}
+    }
+  ],
+  "processingTime": 60,
+  "result": {
+    "tag": "c:ingots/void_steel"
+  }
+}

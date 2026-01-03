@@ -1,0 +1,27 @@
+{
+  "id": "createmetallurgy:bulk_melting/constantan/block",
+  "type": "createmetallurgy:bulk_melting",
+  "conditions": [
+    {
+      "type": "neoforge:not",
+      "value": {
+        "type": "neoforge:tag_empty",
+        "tag": "c:storage_blocks/constantan"
+      }
+    }
+  ],
+  "ingredients": [
+    {
+      "tag": "c:storage_blocks/constantan"
+    }
+  ],
+  "maxHeatRequirement": 50,
+  "minHeatRequirement": 6,
+  "processingTime": 224,
+  "results": [
+    {
+      "amount": 810,
+      "fluid": "createmetallurgy:molten_constantan"
+    }
+  ]
+}

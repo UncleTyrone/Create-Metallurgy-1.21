@@ -1,25 +1,25 @@
 package fr.lucreeper74.createmetallurgy.content.blocks.casting.recipe;
 
-import com.simibubi.create.foundation.fluid.FluidIngredient;
-import com.simibubi.create.foundation.item.SmartInventory;
 import com.simibubi.create.foundation.recipe.IRecipeTypeInfo;
 import fr.lucreeper74.createmetallurgy.CreateMetallurgy;
-import net.minecraft.core.RegistryAccess;
+import net.minecraft.core.HolderLookup;
 import fr.lucreeper74.createmetallurgy.content.blocks.casting.CastingBlockEntity;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.item.crafting.Recipe;
+import net.minecraft.world.item.crafting.RecipeInput;
 import net.minecraft.world.item.crafting.RecipeSerializer;
 import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.level.Level;
-import net.minecraftforge.fluids.FluidStack;
+import net.neoforged.neoforge.fluids.FluidStack;
+import net.neoforged.neoforge.fluids.crafting.SizedFluidIngredient;
 import org.slf4j.Logger;
 
-public abstract class CastingRecipe implements Recipe<SmartInventory> {
+public abstract class CastingRecipe implements Recipe<RecipeInput> {
 
     protected final ResourceLocation id;
-    protected FluidIngredient fluidIngredient;
+    protected SizedFluidIngredient fluidIngredient;
     protected Ingredient ingredient;
     protected int processingDuration;
     protected boolean moldConsumed;
@@ -28,7 +28,7 @@ public abstract class CastingRecipe implements Recipe<SmartInventory> {
     public CastingRecipe(ResourceLocation id) {
         this.id = id;
         this.ingredient = Ingredient.EMPTY;
-        this.fluidIngredient = FluidIngredient.EMPTY;
+        this.fluidIngredient = createEmptyFluidIngredient();
         this.processingDuration = 0;
         this.moldConsumed = false;
         this.result = CastingOutput.EMPTY;
@@ -36,12 +36,19 @@ public abstract class CastingRecipe implements Recipe<SmartInventory> {
         validate(id);
     }
 
+    private static SizedFluidIngredient createEmptyFluidIngredient() {
+        // Return null - we'll handle null in getFluidIngredient() to return a safe default
+        // We can't use SizedFluidIngredient.of(..., 0) because it throws "Size must be positive"
+        return null;
+    }
+
     private void validate(ResourceLocation recipeTypeId) {
         String messageHeader = "Your custom recipe (" + recipeTypeId + ")";
         Logger logger = CreateMetallurgy.LOGGER;
 
-        if(ingredient.isEmpty() && moldConsumed) {
-            logger.warn(messageHeader + " specified a mold condition. Mold conditions have no impact on this recipe cause there is no mold.");
+        if (ingredient.isEmpty() && moldConsumed) {
+            logger.warn(messageHeader
+                    + " specified a mold condition. Mold conditions have no impact on this recipe cause there is no mold.");
         }
     }
 
@@ -51,7 +58,9 @@ public abstract class CastingRecipe implements Recipe<SmartInventory> {
             ItemStack mold = be.moldInv.getStackInSlot(0);
             Ingredient ingredient = castingRecipe.getIngredient();
 
-            boolean fluidMatches = castingRecipe.getFluidIngredient().test(fluidInBuffer);
+            // Handle null or invalid fluidIngredient - if it's null or has amount <= 0, it should match any fluid
+            SizedFluidIngredient fluidIng = castingRecipe.fluidIngredient;
+            boolean fluidMatches = (fluidIng == null || fluidIng.amount() <= 0) || fluidIng.test(fluidInBuffer);
             boolean hasMold = !ingredient.isEmpty();
             boolean ingredientMatches = hasMold && ingredient.test(mold);
 
@@ -61,13 +70,13 @@ public abstract class CastingRecipe implements Recipe<SmartInventory> {
     }
 
     @Override
-    public boolean matches(SmartInventory inv, Level level) {
+    public boolean matches(RecipeInput input, Level level) {
         return false;
     }
 
     @Override
-    public ItemStack assemble(SmartInventory pContainer, RegistryAccess registryAccess) {
-        return null;
+    public ItemStack assemble(RecipeInput input, HolderLookup.Provider registries) {
+        return ItemStack.EMPTY;
     }
 
     @Override
@@ -76,11 +85,10 @@ public abstract class CastingRecipe implements Recipe<SmartInventory> {
     }
 
     @Override
-    public ItemStack getResultItem(RegistryAccess registryAccess) {
+    public ItemStack getResultItem(HolderLookup.Provider registries) {
         return result.getStack();
     }
 
-    @Override
     public ResourceLocation getId() {
         return id;
     }
@@ -99,8 +107,18 @@ public abstract class CastingRecipe implements Recipe<SmartInventory> {
         return ingredient;
     }
 
-    public FluidIngredient getFluidIngredient() {
+    public SizedFluidIngredient getFluidIngredient() {
+        // Return a safe default if fluidIngredient is null or has invalid amount
+        // Use a valid fluid with amount 1 as default - this won't match anything in practice
+        // because recipes without fluid ingredients shouldn't be processed anyway
+        if (fluidIngredient == null || fluidIngredient.amount() <= 0) {
+            return SizedFluidIngredient.of(net.minecraft.world.level.material.Fluids.WATER, 1);
+        }
         return fluidIngredient;
+    }
+    
+    public boolean hasFluidIngredient() {
+        return fluidIngredient != null && fluidIngredient.amount() > 0;
     }
 
     public int getProcessingDuration() {
@@ -109,5 +127,9 @@ public abstract class CastingRecipe implements Recipe<SmartInventory> {
 
     public boolean isMoldConsumed() {
         return moldConsumed;
+    }
+
+    public CastingOutput getResult() {
+        return result;
     }
 }

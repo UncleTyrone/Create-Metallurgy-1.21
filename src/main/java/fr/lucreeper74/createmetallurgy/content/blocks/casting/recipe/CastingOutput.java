@@ -4,20 +4,56 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonSyntaxException;
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.DataResult;
+import com.mojang.serialization.JsonOps;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.TagKey;
 import net.minecraft.util.GsonHelper;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.registries.ForgeRegistries;
 
 import java.util.Iterator;
 
-import static com.simibubi.create.AllTags.optionalTag;
-
 public abstract class CastingOutput {
     public static final CastingOutput EMPTY = CastingOutput.fromStack(ItemStack.EMPTY);
+
+    // CODEC for serializing/deserializing CastingOutput using existing JSON
+    // serialization
+    public static final Codec<CastingOutput> CODEC = Codec.PASSTHROUGH.comapFlatMap(
+            dynamic -> {
+                try {
+                    JsonElement je = (JsonElement) dynamic.getValue();
+                    return DataResult.success(deserialize(je));
+                } catch (Exception e) {
+                    return DataResult.error(() -> "Failed to parse CastingOutput: " + e.getMessage());
+                }
+            },
+            output -> {
+                JsonElement je = output.serialize();
+                return new com.mojang.serialization.Dynamic<>(JsonOps.INSTANCE, je);
+            });
+
+    // StreamCodec for network serialization
+    public static final StreamCodec<RegistryFriendlyByteBuf, CastingOutput> STREAM_CODEC = StreamCodec.composite(
+            ResourceLocation.STREAM_CODEC,
+            output -> {
+                // For network, we serialize as ItemStack (simplified)
+                ItemStack stack = output.getStack();
+                return BuiltInRegistries.ITEM.getKey(stack.getItem());
+            },
+            net.minecraft.network.codec.ByteBufCodecs.INT,
+            output -> output.getStack().getCount(),
+            (itemId, count) -> {
+                Item item = BuiltInRegistries.ITEM.get(itemId);
+                return fromStack(new ItemStack(item, count));
+            });
 
     public abstract ItemStack getStack();
 
@@ -40,25 +76,44 @@ public abstract class CastingOutput {
 
         JsonObject json = je.getAsJsonObject();
         int count = GsonHelper.getAsInt(json, "count", 1);
-        if (json.has("item")) {
-            String itemId = GsonHelper.getAsString(json, "item");
-            ItemStack itemstack = new ItemStack(ForgeRegistries.ITEMS.getValue(new ResourceLocation(itemId)), count);
+        // Handle "id" as an alias for "item" (for 1.21 format compatibility)
+        if (json.has("item") || json.has("id")) {
+            String itemId = json.has("item") ? GsonHelper.getAsString(json, "item") : GsonHelper.getAsString(json, "id");
+            ItemStack itemstack = new ItemStack(BuiltInRegistries.ITEM.get(ResourceLocation.parse(itemId)), count);
             return CastingOutput.fromStack(itemstack);
         } else if (json.has("tag")) {
             String rawTag = GsonHelper.getAsString(json, "tag");
-            TagKey<Item> tag = optionalTag(ForgeRegistries.ITEMS, new ResourceLocation(rawTag));
+            TagKey<Item> tag = TagKey.create(Registries.ITEM, ResourceLocation.parse(rawTag));
             return CastingOutput.fromTag(tag, count);
-        } else throw new JsonParseException("An CastingOutput entry needs either a tag or an item");
+        } else
+            throw new JsonParseException("An CastingOutput entry needs either a tag or an item");
     }
 
     public void write(FriendlyByteBuf buf) {
-        buf.writeItem(getStack());
+        // Serialize ItemStack to NBT - registry access not available in
+        // RecipeSerializer context
+        // Use basic serialization that works without full registry access
+        ItemStack stack = getStack();
+        CompoundTag nbt = new CompoundTag();
+        nbt.putString("id", BuiltInRegistries.ITEM.getKey(stack.getItem()).toString());
+        nbt.putInt("Count", stack.getCount());
+        // Note: DataComponents not serialized here - basic ItemStack only
+        buf.writeNbt(nbt);
     }
 
     public static CastingOutput read(FriendlyByteBuf buf) {
-        return CastingOutput.fromStack(buf.readItem());
+        CompoundTag nbt = buf.readNbt();
+        if (nbt == null)
+            return CastingOutput.EMPTY;
+        // Parse ItemStack from NBT - registry access not available in RecipeSerializer
+        // context
+        ResourceLocation itemId = ResourceLocation.parse(nbt.getString("id"));
+        Item item = BuiltInRegistries.ITEM.get(itemId);
+        int count = nbt.getInt("Count");
+        ItemStack stack = new ItemStack(item, count);
+        // Note: DataComponents not restored here - basic ItemStack only
+        return CastingOutput.fromStack(stack);
     }
-
 
     /**
      * Class for CastingOutput from an ItemStack
@@ -78,14 +133,13 @@ public abstract class CastingOutput {
         @Override
         public JsonElement serialize() {
             JsonObject json = new JsonObject();
-            json.addProperty("item", ForgeRegistries.ITEMS.getKey(stack.getItem()).toString());
+            json.addProperty("item", BuiltInRegistries.ITEM.getKey(stack.getItem()).toString());
             int count = stack.getCount();
             if (count > 1)
                 json.addProperty("count", count);
             return json;
         }
     }
-
 
     /**
      * Class for CastingOutput from a Tag
@@ -101,12 +155,16 @@ public abstract class CastingOutput {
 
         @Override
         public ItemStack getStack() {
-            Iterator<Item> items = ForgeRegistries.ITEMS.tags().getTag(tag).iterator();
-            if (items.hasNext())
-                return new ItemStack(items.next(), count);
-            else
-                return new ItemStack(net.minecraft.world.level.block.Blocks.BARRIER)
-                        .setHoverName(net.minecraft.network.chat.Component.literal("Empty Tag: " + this.tag.location()));
+            var tagResult = BuiltInRegistries.ITEM.getTag(tag);
+            if (tagResult.isPresent() && tagResult.get().size() > 0) {
+                Iterator<Item> items = tagResult.get().stream().map(h -> h.value()).iterator();
+                if (items.hasNext())
+                    return new ItemStack(items.next(), count);
+            }
+            ItemStack barrier = new ItemStack(net.minecraft.world.level.block.Blocks.BARRIER);
+            barrier.set(net.minecraft.core.component.DataComponents.CUSTOM_NAME,
+                    net.minecraft.network.chat.Component.literal("Empty Tag: " + this.tag.location()));
+            return barrier;
         }
 
         @Override

@@ -1,0 +1,15 @@
+{
+  "id": "createmetallurgy:grinding/exposed_cut_copper_slab",
+  "type": "createmetallurgy:grinding",
+  "ingredients": [
+    {
+      "item": "minecraft:exposed_cut_copper_slab"
+    }
+  ],
+  "processingTime": 50,
+  "results": [
+    {
+      "id": "minecraft:cut_copper_slab"
+    }
+  ]
+}

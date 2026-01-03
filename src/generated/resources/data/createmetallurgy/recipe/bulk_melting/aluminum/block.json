@@ -1,0 +1,27 @@
+{
+  "id": "createmetallurgy:bulk_melting/aluminum/block",
+  "type": "createmetallurgy:bulk_melting",
+  "conditions": [
+    {
+      "type": "neoforge:not",
+      "value": {
+        "type": "neoforge:tag_empty",
+        "tag": "c:storage_blocks/aluminum"
+      }
+    }
+  ],
+  "ingredients": [
+    {
+      "tag": "c:storage_blocks/aluminum"
+    }
+  ],
+  "maxHeatRequirement": 50,
+  "minHeatRequirement": 3,
+  "processingTime": 224,
+  "results": [
+    {
+      "amount": 810,
+      "fluid": "createmetallurgy:molten_aluminum"
+    }
+  ]
+}

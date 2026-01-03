@@ -1,0 +1,27 @@
+{
+  "id": "createmetallurgy:casting_in_table/aluminum/gear",
+  "type": "createmetallurgy:casting_in_table",
+  "conditions": [
+    {
+      "type": "neoforge:not",
+      "value": {
+        "type": "neoforge:tag_empty",
+        "tag": "c:gears/aluminum"
+      }
+    }
+  ],
+  "ingredients": [
+    {
+      "item": "createmetallurgy:graphite_gear_mold"
+    },
+    {
+      "amount": 360,
+      "fluid": "createmetallurgy:molten_aluminum",
+      "nbt": {}
+    }
+  ],
+  "processingTime": 240,
+  "result": {
+    "tag": "c:gears/aluminum"
+  }
+}

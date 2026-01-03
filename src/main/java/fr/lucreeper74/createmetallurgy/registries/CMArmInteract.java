@@ -10,7 +10,6 @@ import net.minecraft.core.Registry;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 
-@SuppressWarnings("unused")
 public class CMArmInteract extends AllArmInteractionPointTypes {
     static {
         register("foundry_basin", new FoundryBasinType());
@@ -20,10 +19,11 @@ public class CMArmInteract extends AllArmInteractionPointTypes {
     }
 
     private static <T extends ArmInteractionPointType> void register(String name, T type) {
-        Registry.register(CreateBuiltInRegistries.ARM_INTERACTION_POINT_TYPE, CreateMetallurgy.genRL(name), type);
+        Registry.register(CreateBuiltInRegistries.ARM_INTERACTION_POINT_TYPE, CreateMetallurgy.asResource(name), type);
     }
 
-    public static void init() {}
+    public static void init() {
+    }
 
     //
 

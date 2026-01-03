@@ -1,0 +1,15 @@
+{
+  "id": "createmetallurgy:casting_in_basin/tungsten/block",
+  "type": "createmetallurgy:casting_in_basin",
+  "ingredients": [
+    {
+      "amount": 810,
+      "fluid": "createmetallurgy:molten_tungsten",
+      "nbt": {}
+    }
+  ],
+  "processingTime": 480,
+  "result": {
+    "id": "createmetallurgy:tungsten_block"
+  }
+}

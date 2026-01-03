@@ -1,0 +1,27 @@
+{
+  "id": "createmetallurgy:casting_in_table/bronze/rod",
+  "type": "createmetallurgy:casting_in_table",
+  "conditions": [
+    {
+      "type": "neoforge:not",
+      "value": {
+        "type": "neoforge:tag_empty",
+        "tag": "c:rods/bronze"
+      }
+    }
+  ],
+  "ingredients": [
+    {
+      "item": "createmetallurgy:graphite_rod_mold"
+    },
+    {
+      "amount": 45,
+      "fluid": "createmetallurgy:molten_bronze",
+      "nbt": {}
+    }
+  ],
+  "processingTime": 30,
+  "result": {
+    "tag": "c:rods/bronze"
+  }
+}

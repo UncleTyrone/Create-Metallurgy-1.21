@@ -1,0 +1,18 @@
+{
+  "id": "createmetallurgy:casting_in_table/tungsten/nugget",
+  "type": "createmetallurgy:casting_in_table",
+  "ingredients": [
+    {
+      "item": "createmetallurgy:graphite_nugget_mold"
+    },
+    {
+      "amount": 10,
+      "fluid": "createmetallurgy:molten_tungsten",
+      "nbt": {}
+    }
+  ],
+  "processingTime": 6,
+  "result": {
+    "id": "createmetallurgy:tungsten_nugget"
+  }
+}

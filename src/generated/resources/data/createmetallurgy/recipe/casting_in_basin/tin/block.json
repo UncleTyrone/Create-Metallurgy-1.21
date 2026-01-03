@@ -1,0 +1,24 @@
+{
+  "id": "createmetallurgy:casting_in_basin/tin/block",
+  "type": "createmetallurgy:casting_in_basin",
+  "conditions": [
+    {
+      "type": "neoforge:not",
+      "value": {
+        "type": "neoforge:tag_empty",
+        "tag": "c:storage_blocks/tin"
+      }
+    }
+  ],
+  "ingredients": [
+    {
+      "amount": 810,
+      "fluid": "createmetallurgy:molten_tin",
+      "nbt": {}
+    }
+  ],
+  "processingTime": 480,
+  "result": {
+    "tag": "c:storage_blocks/tin"
+  }
+}

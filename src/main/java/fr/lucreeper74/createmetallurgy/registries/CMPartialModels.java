@@ -15,7 +15,7 @@ public class CMPartialModels {
 
     public static final PartialModel
 
-            FOUNDRY_MIXER_POLE = block("foundry_mixer/pole"),
+    FOUNDRY_MIXER_POLE = block("foundry_mixer/pole"),
             FOUNDRY_MIXER_HEAD = block("foundry_mixer/head"),
             SHAFTLESS_STONE_COGWHEEL = block("foundry_mixer/cog"),
 
@@ -27,12 +27,11 @@ public class CMPartialModels {
             BULB_INNER_GLOW = block("light_bulb/inner_glow"),
 
             LABELLING_STATION_TRAY_REGULAR = block("labelling_station/tray"),
-                LABELLING_STATION_TRAY_DEFRAG = block("labelling_station/tray"),
-                LABELLING_STATION_HATCH_OPEN = block("labelling_station/hatch_open"),
-                LABELLING_STATION_HATCH_CLOSED = block("labelling_station/hatch_closed"),
+            LABELLING_STATION_TRAY_DEFRAG = block("labelling_station/tray"),
+            LABELLING_STATION_HATCH_OPEN = block("labelling_station/hatch_open"),
+            LABELLING_STATION_HATCH_CLOSED = block("labelling_station/hatch_closed"),
 
-
-    // JEI Gui models
+            // JEI Gui models
 
             JEI_CURCIBLE_2X2 = jei("assembled_crucible");
 
@@ -48,17 +47,18 @@ public class CMPartialModels {
     static {
         for (PackageStyle style : LadleStyles.ALL_STYLES) {
             ResourceLocation key = LadleStyles.getStyleId(style);
-            PartialModel model = PartialModel.of(CreateMetallurgy.genRL("item/ladle/" + key.getPath()));
+            PartialModel model = PartialModel.of(CreateMetallurgy.asResource("item/ladle/" + key.getPath()));
             AllPartialModels.PACKAGES.put(key, model);
             AllPartialModels.PACKAGE_RIGGING.put(key, PartialModel.of(LadleStyles.getHandleModel()));
         }
     }
 
     private static PartialModel block(String path) {
-        return PartialModel.of(CreateMetallurgy.genRL("block/" + path));
+        return PartialModel.of(CreateMetallurgy.asResource("block/" + path));
     }
+
     private static PartialModel jei(String path) {
-        return PartialModel.of(CreateMetallurgy.genRL("jei/" + path));
+        return PartialModel.of(CreateMetallurgy.asResource("jei/" + path));
     }
 
     public static void init() {

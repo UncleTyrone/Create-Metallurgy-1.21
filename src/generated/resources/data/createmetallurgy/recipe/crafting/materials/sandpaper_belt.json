@@ -1,0 +1,18 @@
+{
+  "id": "createmetallurgy:crafting/materials/sandpaper_belt",
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "D": {
+      "tag": "c:sand/colorless"
+    }
+  },
+  "pattern": [
+    "DDD",
+    "DDD"
+  ],
+  "result": {
+    "id": "createmetallurgy:sandpaper_belt"
+  },
+  "show_notification": true
+}

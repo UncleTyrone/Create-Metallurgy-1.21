@@ -1,0 +1,26 @@
+{
+  "id": "createmetallurgy:melting/tungsten/gear",
+  "type": "createmetallurgy:melting",
+  "conditions": [
+    {
+      "type": "neoforge:not",
+      "value": {
+        "type": "neoforge:tag_empty",
+        "tag": "c:gears/tungsten"
+      }
+    }
+  ],
+  "heatRequirement": "superheated",
+  "ingredients": [
+    {
+      "tag": "c:gears/tungsten"
+    }
+  ],
+  "processingTime": 160,
+  "results": [
+    {
+      "amount": 360,
+      "fluid": "createmetallurgy:molten_tungsten"
+    }
+  ]
+}

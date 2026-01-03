@@ -1,0 +1,25 @@
+{
+  "id": "createmetallurgy:crafting/content/mechanical_belt_grinder",
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "B": {
+      "item": "createmetallurgy:sandpaper_belt"
+    },
+    "C": {
+      "item": "create:andesite_casing"
+    },
+    "I": {
+      "item": "create:shaft"
+    }
+  },
+  "pattern": [
+    "B",
+    "C",
+    "I"
+  ],
+  "result": {
+    "id": "createmetallurgy:mechanical_belt_grinder"
+  },
+  "show_notification": true
+}

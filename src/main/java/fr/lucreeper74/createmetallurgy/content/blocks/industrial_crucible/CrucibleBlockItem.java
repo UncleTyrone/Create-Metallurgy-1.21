@@ -5,6 +5,8 @@ import fr.lucreeper74.createmetallurgy.registries.CMBlockEntityTypes;
 import fr.lucreeper74.createmetallurgy.utils.CMConnectivityHandler;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.InteractionResult;
@@ -15,7 +17,7 @@ import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraftforge.fluids.FluidStack;
+import net.neoforged.neoforge.fluids.FluidStack;
 
 import javax.annotation.Nullable;
 
@@ -34,24 +36,28 @@ public class CrucibleBlockItem extends BlockItem {
     }
 
     @Override
-    protected boolean updateCustomBlockEntityTag(BlockPos pos, Level level, @Nullable Player player, ItemStack stack, BlockState state) {
+    protected boolean updateCustomBlockEntityTag(BlockPos pos, Level level, @Nullable Player player, ItemStack stack,
+            BlockState state) {
         MinecraftServer minecraftserver = level.getServer();
         if (minecraftserver == null)
             return false;
-        CompoundTag nbt = stack.getTagElement("BlockEntityTag");
-        if (nbt != null) {
+        HolderLookup.Provider registries = level.registryAccess();
+        var blockEntityData = stack.get(DataComponents.BLOCK_ENTITY_DATA);
+        if (blockEntityData != null) {
+            CompoundTag nbt = blockEntityData.copyTag();
             nbt.remove("Luminosity");
             nbt.remove("Size");
             nbt.remove("Height");
             nbt.remove("Controller");
             nbt.remove("LastKnownPos");
             if (nbt.contains("TankContent")) {
-                FluidStack fluid = FluidStack.loadFluidStackFromNBT(nbt.getCompound("TankContent"));
+                FluidStack fluid = FluidStack.parseOptional(registries, nbt.getCompound("TankContent"));
                 if (!fluid.isEmpty()) {
                     fluid.setAmount(Math.min(FluidTankBlockEntity.getCapacityMultiplier(), fluid.getAmount()));
-                    nbt.put("TankContent", fluid.writeToNBT(new CompoundTag()));
+                    nbt.put("TankContent", fluid.saveOptional(registries));
                 }
             }
+            stack.set(DataComponents.BLOCK_ENTITY_DATA, net.minecraft.world.item.component.CustomData.of(nbt));
         }
         return super.updateCustomBlockEntityTag(pos, level, player, stack, state);
     }
@@ -74,7 +80,8 @@ public class CrucibleBlockItem extends BlockItem {
 
         if (!CrucibleBlock.isLadle(placedOnState))
             return;
-        CrucibleBlockEntity ladleAt = CMConnectivityHandler.partAt(CMBlockEntityTypes.INDUSTRIAL_CRUCIBLE.get(), world, placedOnPos);
+        CrucibleBlockEntity ladleAt = CMConnectivityHandler.partAt(CMBlockEntityTypes.INDUSTRIAL_CRUCIBLE.get(), world,
+                placedOnPos);
 
         if (ladleAt == null)
             return;
@@ -90,7 +97,7 @@ public class CrucibleBlockItem extends BlockItem {
         BlockPos startPos = face == Direction.DOWN ? controllerBE.getBlockPos()
                 .below()
                 : controllerBE.getBlockPos()
-                .above(controllerBE.height);
+                        .above(controllerBE.height);
 
         if (startPos.getY() != pos.getY())
             return;

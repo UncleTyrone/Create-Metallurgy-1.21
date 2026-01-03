@@ -4,7 +4,7 @@ import com.simibubi.create.foundation.damageTypes.DamageTypeBuilder;
 import fr.lucreeper74.createmetallurgy.CreateMetallurgy;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.data.worldgen.BootstapContext;
+import net.minecraft.data.worldgen.BootstrapContext;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.damagesource.DamageEffects;
 import net.minecraft.world.damagesource.DamageScaling;
@@ -15,17 +15,17 @@ import net.minecraft.world.level.LevelReader;
 
 public class CMDamageTypes {
 
-    //Damage Types -----------------------------------------------------------------------------
-    public static final ResourceKey<DamageType>
-            GRINDER = key("mechanical_grinder"),
+    // Damage Types
+    // -----------------------------------------------------------------------------
+    public static final ResourceKey<DamageType> GRINDER = key("mechanical_grinder"),
             MOLTEN_FLUID = key("molten_fluid"),
             FOUNDRY = key("crucible");
 
     private static ResourceKey<DamageType> key(String name) {
-        return ResourceKey.create(Registries.DAMAGE_TYPE, CreateMetallurgy.genRL(name));
+        return ResourceKey.create(Registries.DAMAGE_TYPE, CreateMetallurgy.asResource(name));
     }
 
-    public static void bootstrap(BootstapContext<DamageType> ctx) {
+    public static void bootstrap(BootstrapContext<DamageType> ctx) {
         new DamageTypeBuilder(GRINDER).register(ctx);
         new DamageTypeBuilder(MOLTEN_FLUID).scaling(DamageScaling.ALWAYS).effects(DamageEffects.BURNING).register(ctx);
         new DamageTypeBuilder(FOUNDRY).scaling(DamageScaling.ALWAYS).effects(DamageEffects.BURNING).register(ctx);
@@ -36,7 +36,8 @@ public class CMDamageTypes {
         return new DamageSource(registry.getHolderOrThrow(key));
     }
 
-    // Damage Sources --------------------------------------------------------------------------
+    // Damage Sources
+    // --------------------------------------------------------------------------
     public static DamageSource grinder(Level level) {
         return source(GRINDER, level);
     }

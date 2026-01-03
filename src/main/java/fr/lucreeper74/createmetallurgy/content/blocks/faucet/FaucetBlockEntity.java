@@ -19,19 +19,16 @@ import net.minecraft.tags.FluidTags;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.material.Fluid;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
-import net.minecraftforge.common.capabilities.ForgeCapabilities;
-import net.minecraftforge.common.util.LazyOptional;
-import net.minecraftforge.fluids.FluidStack;
-import net.minecraftforge.fluids.capability.IFluidHandler;
-import net.minecraftforge.fluids.capability.IFluidHandler.FluidAction;
-import net.minecraftforge.fluids.capability.templates.EmptyFluidHandler;
-import net.minecraftforge.fluids.capability.templates.FluidTank;
+import net.neoforged.neoforge.capabilities.Capabilities;
+import net.neoforged.neoforge.fluids.FluidStack;
+import net.neoforged.neoforge.fluids.capability.IFluidHandler;
+import net.neoforged.neoforge.fluids.capability.IFluidHandler.FluidAction;
+import net.neoforged.neoforge.fluids.capability.templates.FluidTank;
 
 import java.util.List;
 
@@ -42,8 +39,9 @@ public class FaucetBlockEntity extends SmartBlockEntity {
     private static final int MAX_HEIGHT = 5;
     public static final int TRANSFER_RATE = 10;
 
-    private LazyOptional<IFluidHandler> attachedTank;
-    private LazyOptional<IFluidHandler> targetTank;
+    private IFluidHandler attachedTank;
+    private IFluidHandler targetTank;
+    private boolean attachedTankCached = false;
 
     // Rendering purposes only
     private int fallingDistance;
@@ -58,23 +56,23 @@ public class FaucetBlockEntity extends SmartBlockEntity {
     }
 
     @Override
-    protected void read(CompoundTag compound, boolean clientPacket) {
-        super.read(compound, clientPacket);
+    protected void read(CompoundTag compound, HolderLookup.Provider registries, boolean clientPacket) {
+        super.read(compound, registries, clientPacket);
         fallingDistance = compound.getInt("fallingDistance");
 
         if (compound.contains("renderFluid")) {
-            renderFluid = FluidStack.loadFluidStackFromNBT(compound.getCompound("renderFluid"));
+            renderFluid = FluidStack.parseOptional(registries, compound.getCompound("renderFluid"));
         } else {
             renderFluid = FluidStack.EMPTY;
         }
     }
 
     @Override
-    protected void write(CompoundTag compound, boolean clientPacket) {
-        super.write(compound, clientPacket);
+    protected void write(CompoundTag compound, HolderLookup.Provider registries, boolean clientPacket) {
+        super.write(compound, registries, clientPacket);
         compound.putInt("fallingDistance", fallingDistance);
         if (!renderFluid.isEmpty())
-            compound.put("renderFluid", renderFluid.writeToNBT(new CompoundTag()));
+            compound.put("renderFluid", renderFluid.saveOptional(registries));
     }
 
     @Override
@@ -86,24 +84,17 @@ public class FaucetBlockEntity extends SmartBlockEntity {
         }
     }
 
-    public LazyOptional<IFluidHandler> getTank(BlockPos pos, Direction direction) {
-        BlockEntity attachedBE = level.getBlockEntity(pos);
-
-        if (attachedBE != null) {
-            attachedBE.setChanged();
-            LazyOptional<IFluidHandler> fluidHandler = attachedBE.getCapability(ForgeCapabilities.FLUID_HANDLER, direction);
-            if (fluidHandler.isPresent())
-                return fluidHandler;
-        }
-
-        return LazyOptional.empty();
+    public IFluidHandler getTank(BlockPos pos, Direction direction) {
+        return level.getCapability(Capabilities.FluidHandler.BLOCK, pos, direction);
     }
 
     public IFluidHandler getAttachedTank() {
         Direction facing = getBlockState().getValue(FaucetBlock.FACING);
-        if (attachedTank == null) // Fetch the attached tank only if it has changed
+        if (!attachedTankCached) { // Fetch the attached tank only if it has changed
             attachedTank = getTank(worldPosition.relative(facing.getOpposite()), facing);
-        return attachedTank.orElse(EmptyFluidHandler.INSTANCE);
+            attachedTankCached = true;
+        }
+        return attachedTank != null ? attachedTank : new FluidTank(0);
     }
 
     public IFluidHandler getTargetTank() {
@@ -122,7 +113,7 @@ public class FaucetBlockEntity extends SmartBlockEntity {
             invalidateRenderBoundingBox();
         }
         sendData();
-        return targetTank.orElse(EmptyFluidHandler.INSTANCE);
+        return targetTank != null ? targetTank : new FluidTank(0);
     }
 
     public void trySpoutput() {
@@ -149,13 +140,13 @@ public class FaucetBlockEntity extends SmartBlockEntity {
     private boolean spillOnEntities() {
         boolean isFluidBlocked = false;
 
-        Fluid spilledFluid = renderFluid.getFluid();
-        List<Entity> entities = getLevel().getEntities(null, getRenderBoundingBox()); // Blacklist entities in the parameter
+        List<Entity> entities = getLevel().getEntities(null, getRenderBoundingBox()); // Blacklist entities in the
+                                                                                      // parameter
 
         for (Entity entity : entities) {
-            if (spilledFluid.is(CMTags.CMFluidTags.MOLTEN_MATERIAL.tag) || spilledFluid.is(FluidTags.LAVA)) {
+            if (renderFluid.is(CMTags.CMFluidTags.MOLTEN_MATERIAL.tag) || renderFluid.is(FluidTags.LAVA)) {
                 if (!entity.fireImmune()) {
-                    entity.setSecondsOnFire(MOLTEN_FLUID_BURNING_TIME);
+                    entity.igniteForSeconds(MOLTEN_FLUID_BURNING_TIME);
                     if (entity.hurt(CMDamageTypes.moltenFluid(entity.level()), 4.0F))
                         entity.playSound(SoundEvents.GENERIC_BURN, .4F, 3F);
                 }
@@ -167,7 +158,7 @@ public class FaucetBlockEntity extends SmartBlockEntity {
                 if (LadleItem.getFluidAmount(ladle) < LADLE_CAPACITY) {
                     isFluidBlocked = true; // The Ladle can be filled
 
-                    FluidTank targetTank = LadleItem.getFluidContents(ladle);
+                    FluidTank targetTank = LadleItem.getFluidContents(ladle, level.registryAccess());
 
                     for (boolean simulate : Iterate.trueAndFalse) {
                         FluidAction action = simulate ? FluidAction.SIMULATE : FluidAction.EXECUTE;
@@ -182,7 +173,7 @@ public class FaucetBlockEntity extends SmartBlockEntity {
                         if (simulate)
                             continue;
 
-                        LadleItem.setFluidContents(ladle, targetTank);
+                        LadleItem.setFluidContents(ladle, targetTank, level.registryAccess());
                     }
                 }
             }
@@ -210,28 +201,30 @@ public class FaucetBlockEntity extends SmartBlockEntity {
             if (simulate)
                 continue;
 
-            if (!renderFluid.isFluidEqual(drained)) {
+            if (!FluidStack.isSameFluidSameComponents(renderFluid, drained)) {
                 renderFluid = drained;
                 sendData();
             }
         }
 
-
-//        int filled = targetTank instanceof SmartFluidTankBehaviour.InternalFluidHandler
-//                ? ((SmartFluidTankBehaviour.InternalFluidHandler) targetTank).forceFill(drained, FluidAction.SIMULATE)
-//                : targetTank.fill(drained, FluidAction.SIMULATE);
-//
-//        if (filled > 0) {
-//            drained = inputTank.drain(filled, FluidAction.EXECUTE);
-//            filled = targetTank instanceof SmartFluidTankBehaviour.InternalFluidHandler
-//                    ? ((SmartFluidTankBehaviour.InternalFluidHandler) targetTank).forceFill(drained, FluidAction.EXECUTE)
-//                    : targetTank.fill(drained, FluidAction.EXECUTE);
-//
-//            if (!renderFluid.isFluidEqual(drained)) {
-//                renderFluid = drained;
-//                sendData();
-//            }
-//        }
+        // int filled = targetTank instanceof
+        // SmartFluidTankBehaviour.InternalFluidHandler
+        // ? ((SmartFluidTankBehaviour.InternalFluidHandler)
+        // targetTank).forceFill(drained, FluidAction.SIMULATE)
+        // : targetTank.fill(drained, FluidAction.SIMULATE);
+        //
+        // if (filled > 0) {
+        // drained = inputTank.drain(filled, FluidAction.EXECUTE);
+        // filled = targetTank instanceof SmartFluidTankBehaviour.InternalFluidHandler
+        // ? ((SmartFluidTankBehaviour.InternalFluidHandler)
+        // targetTank).forceFill(drained, FluidAction.EXECUTE)
+        // : targetTank.fill(drained, FluidAction.EXECUTE);
+        //
+        // if (!renderFluid.isFluidEqual(drained)) {
+        // renderFluid = drained;
+        // sendData();
+        // }
+        // }
 
         return filled;
     }
@@ -241,7 +234,7 @@ public class FaucetBlockEntity extends SmartBlockEntity {
 
         FluidStack fluid = inputTank.drain(TRANSFER_RATE, IFluidHandler.FluidAction.EXECUTE);
 
-        if (!renderFluid.isFluidEqual(fluid)) {
+        if (!FluidStack.isSameFluidSameComponents(renderFluid, fluid)) {
             renderFluid = fluid;
             sendData();
         }
@@ -258,6 +251,7 @@ public class FaucetBlockEntity extends SmartBlockEntity {
     public void neighborChanged(BlockPos neighbor) {
         if (worldPosition.relative(getBlockState().getValue(FaucetBlock.FACING).getOpposite()).equals(neighbor)) {
             attachedTank = null; // Invalidate previous attached tank
+            attachedTankCached = false;
         } else if (worldPosition.below().equals(neighbor)) {
             targetTank = null; // Invalidate targeted tank if smth change in the path
         }

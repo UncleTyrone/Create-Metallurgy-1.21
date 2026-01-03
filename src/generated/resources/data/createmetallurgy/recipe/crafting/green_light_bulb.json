@@ -1,0 +1,25 @@
+{
+  "id": "createmetallurgy:crafting/green_light_bulb",
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "key": {
+    "G": {
+      "item": "minecraft:green_stained_glass"
+    },
+    "S": {
+      "item": "create:iron_sheet"
+    },
+    "T": {
+      "item": "createmetallurgy:tungsten_wire_spool"
+    }
+  },
+  "pattern": [
+    " G ",
+    " T ",
+    " S "
+  ],
+  "result": {
+    "id": "createmetallurgy:green_light_bulb"
+  },
+  "show_notification": true
+}

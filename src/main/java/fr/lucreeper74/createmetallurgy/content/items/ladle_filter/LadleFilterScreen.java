@@ -13,21 +13,24 @@ import fr.lucreeper74.createmetallurgy.CreateMetallurgy;
 import fr.lucreeper74.createmetallurgy.content.entities.ladle.LadleFluidHandler;
 import fr.lucreeper74.createmetallurgy.content.items.ladle_filter.LadleFilterScreenPacket.Type;
 import fr.lucreeper74.createmetallurgy.registries.CMItems;
-import fr.lucreeper74.createmetallurgy.registries.CMPackets;
 import fr.lucreeper74.createmetallurgy.utils.CMLang;
 import net.createmod.catnip.gui.element.GuiGameElement;
 import net.minecraft.ChatFormatting;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.renderer.GameRenderer;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.common.capabilities.ForgeCapabilities;
-import net.minecraftforge.fluids.FluidStack;
+import net.neoforged.neoforge.capabilities.Capabilities;
+import net.neoforged.neoforge.fluids.FluidStack;
+import net.neoforged.neoforge.network.PacketDistributor;
 import org.lwjgl.glfw.GLFW;
 
 import java.util.List;
@@ -36,7 +39,8 @@ import static com.simibubi.create.foundation.gui.AllGuiTextures.PLAYER_INVENTORY
 
 public class LadleFilterScreen extends AbstractFilterScreen<LadleFilterMenu> {
 
-    private static final ResourceLocation BACKGROUND_TEXTURE = CreateMetallurgy.genRL("textures/gui/ladle_filter.png");
+    private static final ResourceLocation BACKGROUND_TEXTURE = CreateMetallurgy
+            .asResource("textures/gui/ladle_filter.png");
     private static final String PREFIX = "gui.ladle_filter.";
 
     private MutableComponent filledAmountTitle = CMLang.translateDirect(PREFIX + "filled_amount");
@@ -48,8 +52,7 @@ public class LadleFilterScreen extends AbstractFilterScreen<LadleFilterMenu> {
             CMLang.translateDirect("generic.symbol.greater"),
             CMLang.translateDirect("generic.symbol.greater_eq"),
             CMLang.translateDirect("generic.symbol.less"),
-            CMLang.translateDirect("generic.symbol.less_eq")
-    );
+            CMLang.translateDirect("generic.symbol.less_eq"));
 
     private ScrollInput filledAmount;
     private SelectionScrollInput comparator;
@@ -78,9 +81,11 @@ public class LadleFilterScreen extends AbstractFilterScreen<LadleFilterMenu> {
         RenderSystem.setShaderTexture(0, BACKGROUND_TEXTURE);
         graphics.blit(BACKGROUND_TEXTURE, x, y, 0, 0, imageWidth, imageHeight);
 
-        graphics.drawString(font, title, x + (background.getWidth() - 8) / 2 - font.width(title) / 2, y + 4, 0x3D3C48, false);
-        GuiGameElement.of(menu.contentHolder).<GuiGameElement
-                        .GuiRenderBuilder>at(x + background.getWidth() + 8, y + background.getHeight() - 52, -200)
+        graphics.drawString(font, title, x + (background.getWidth() - 8) / 2 - font.width(title) / 2, y + 4, 0x3D3C48,
+                false);
+        GuiGameElement
+                .of(menu.contentHolder).<GuiGameElement.GuiRenderBuilder>at(x + background.getWidth() + 8,
+                        y + background.getHeight() - 52, -200)
                 .scale(4)
                 .render(graphics);
     }
@@ -95,10 +100,8 @@ public class LadleFilterScreen extends AbstractFilterScreen<LadleFilterMenu> {
         }
 
         ItemStack stackInSlot = menu.ghostInventory.getStackInSlot(0);
-        if (!stackInSlot.equals(lastFluidFilterItem, false))
+        if (!ItemStack.isSameItemSameComponents(stackInSlot, lastFluidFilterItem))
             fluidFilterChanged(stackInSlot);
-
-        addressBox.tick();
     }
 
     @Override
@@ -125,9 +128,7 @@ public class LadleFilterScreen extends AbstractFilterScreen<LadleFilterMenu> {
                 .addHint(filledAmountHint)
                 .withRange(-1, LadleFluidHandler.LADLE_CAPACITY + 1)
                 .calling(state -> sendScrollInputs())
-                .withStepFunction(sc ->
-                        filledAmount.getState() < 0 ? 1 :
-                                sc.shift ? 500 : 50)
+                .withStepFunction(sc -> filledAmount.getState() < 0 ? 1 : sc.shift ? 500 : 50)
                 .setState(menu.filledAmount);
         addRenderableWidgets(filledAmount);
 
@@ -161,7 +162,6 @@ public class LadleFilterScreen extends AbstractFilterScreen<LadleFilterMenu> {
                 comparatorsList.get(menu.comparator),
                 x + 44, y + 60, isDisabled ? ChatFormatting.GRAY.getColor() : 0xFFFFFFFF, true);
 
-
         PoseStack ms = graphics.pose();
         ms.pushPose();
         ms.translate(leftPos + 16, topPos + 23, 0);
@@ -178,16 +178,19 @@ public class LadleFilterScreen extends AbstractFilterScreen<LadleFilterMenu> {
             return;
         }
 
-        stack.getCapability(ForgeCapabilities.FLUID_HANDLER_ITEM).ifPresent(fluidHandler ->
-                fluidFilter = fluidHandler.getFluidInTank(0));
+        var fluidHandler = stack.getCapability(Capabilities.FluidHandler.ITEM);
+        if (fluidHandler != null)
+            fluidFilter = fluidHandler.getFluidInTank(0);
+        else
+            fluidFilter = FluidStack.EMPTY;
         sendFluidFilter();
     }
 
     @Override
-    public boolean mouseScrolled(double mouseX, double mouseY, double delta) {
-        if (addressBox.mouseScrolled(mouseX, mouseY, delta))
+    public boolean mouseScrolled(double mouseX, double mouseY, double deltaX, double deltaY) {
+        if (addressBox.mouseScrolled(mouseX, mouseY, deltaX, deltaY))
             return true;
-        return super.mouseScrolled(mouseX, mouseY, delta);
+        return super.mouseScrolled(mouseX, mouseY, deltaX, deltaY);
     }
 
     @Override
@@ -220,21 +223,42 @@ public class LadleFilterScreen extends AbstractFilterScreen<LadleFilterMenu> {
         tag.putInt("FilledAmount", filledAmount);
         tag.putInt("Comparator", comparator);
 
-        CMPackets.INSTANCE.sendToServer(new LadleFilterScreenPacket(Type.UPDATE_PERCENT, tag));
+        PacketDistributor.sendToServer(new LadleFilterScreenPacket(Type.UPDATE_PERCENT, tag));
     }
 
     public void sendAddress(String address) {
         menu.address = address;
         CompoundTag tag = new CompoundTag();
         tag.putString("Address", address);
-        CMPackets.INSTANCE.sendToServer(new LadleFilterScreenPacket(Type.UPDATE_ADDRESS, tag));
+        PacketDistributor.sendToServer(new LadleFilterScreenPacket(Type.UPDATE_ADDRESS, tag));
     }
 
     public void sendFluidFilter() {
         menu.fluidFilter = fluidFilter;
         menu.ghostInventory.setStackInSlot(0, fluidFilter.getFluid().getBucket().getDefaultInstance());
         CompoundTag tag = new CompoundTag();
-        tag.put("FluidFilter", fluidFilter.writeToNBT(new CompoundTag()));
-        CMPackets.INSTANCE.sendToServer(new LadleFilterScreenPacket(Type.UPDATE_FLUID, tag));
+
+        // Get registry access from the player
+        HolderLookup.Provider registries = null;
+        Player player = Minecraft.getInstance().player;
+        if (player != null) {
+            registries = player.registryAccess();
+        }
+
+        // Save fluid filter with registry access
+        net.minecraft.nbt.Tag fluidTag;
+        if (registries != null) {
+            fluidTag = fluidFilter.saveOptional(registries);
+        } else {
+            // Fallback if registry access is not available (shouldn't happen in normal
+            // usage)
+            fluidTag = new CompoundTag();
+        }
+        if (fluidTag instanceof CompoundTag compoundTag) {
+            tag.put("FluidFilter", compoundTag);
+        } else {
+            tag.put("FluidFilter", new CompoundTag());
+        }
+        PacketDistributor.sendToServer(new LadleFilterScreenPacket(Type.UPDATE_FLUID, tag));
     }
 }

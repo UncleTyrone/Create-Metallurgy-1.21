@@ -1,0 +1,22 @@
+{
+  "id": "createmetallurgy:alloying/steel",
+  "type": "createmetallurgy:alloying",
+  "heatRequirement": "heated",
+  "ingredients": [
+    {
+      "tag": "c:coal_coke"
+    },
+    {
+      "amount": 270,
+      "fluid": "createmetallurgy:molten_iron",
+      "nbt": {}
+    }
+  ],
+  "processingTime": 40,
+  "results": [
+    {
+      "amount": 270,
+      "fluid": "createmetallurgy:molten_steel"
+    }
+  ]
+}

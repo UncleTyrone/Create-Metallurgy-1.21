@@ -10,9 +10,8 @@ import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
-import net.minecraftforge.common.capabilities.ForgeCapabilities;
-import net.minecraftforge.fluids.FluidStack;
-import net.minecraftforge.fluids.capability.IFluidHandler;
+import net.neoforged.neoforge.fluids.FluidStack;
+import net.neoforged.neoforge.fluids.capability.IFluidHandler;
 import org.apache.commons.lang3.tuple.Pair;
 
 import javax.annotation.Nullable;
@@ -27,13 +26,15 @@ public class CMConnectivityHandler {
         formMulti(be.getType(), be.getLevel(), cache, frontier);
     }
 
-    private static <T extends BlockEntity & IMultiBlockEntityContainer> void formMulti(BlockEntityType<?> type, BlockGetter level, SearchCache<T> cache, List<T> frontier) {
+    private static <T extends BlockEntity & IMultiBlockEntityContainer> void formMulti(BlockEntityType<?> type,
+            BlockGetter level, SearchCache<T> cache, List<T> frontier) {
         PriorityQueue<Pair<Integer, T>> creationQueue = makeCreationQueue();
         Set<BlockPos> visited = new HashSet<>();
         Direction.Axis mainAxis = frontier.get(0)
                 .getMainConnectionAxis();
 
-        // essentially, if it's a vertical multi then the search won't be restricted by Y
+        // essentially, if it's a vertical multi then the search won't be restricted by
+        // Y
         // alternately, a horizontal multi search shouldn't be restricted by X or Z
         int minX = (mainAxis == Direction.Axis.Y ? Integer.MAX_VALUE : Integer.MIN_VALUE);
         int minY = (mainAxis != Direction.Axis.Y ? Integer.MAX_VALUE : Integer.MIN_VALUE);
@@ -97,8 +98,9 @@ public class CMConnectivityHandler {
         }
     }
 
-    private static <T extends BlockEntity & IMultiBlockEntityContainer> int tryToFormNewMulti(T be, SearchCache<T> cache,
-                                                                                              boolean simulate) {
+    private static <T extends BlockEntity & IMultiBlockEntityContainer> int tryToFormNewMulti(T be,
+            SearchCache<T> cache,
+            boolean simulate) {
         int bestWidth = 1;
         int bestAmount = -1;
         if (!be.isController())
@@ -132,7 +134,8 @@ public class CMConnectivityHandler {
         return bestAmount;
     }
 
-    private static <T extends BlockEntity & IMultiBlockEntityContainer> int tryToFormNewMultiOfWidth(T be, int width, SearchCache<T> cache, boolean simulate) {
+    private static <T extends BlockEntity & IMultiBlockEntityContainer> int tryToFormNewMultiOfWidth(T be, int width,
+            SearchCache<T> cache, boolean simulate) {
         int amount = 0;
         int height = 0;
         BlockEntityType<?> type = be.getType();
@@ -148,8 +151,7 @@ public class CMConnectivityHandler {
 
         Direction.Axis axis = be.getMainConnectionAxis();
 
-        Search:
-        for (int yOffset = 0; yOffset < be.getMaxLength(axis, width); yOffset++) {
+        Search: for (int yOffset = 0; yOffset < be.getMaxLength(axis, width); yOffset++) {
             for (int xOffset = 0; xOffset < width; xOffset++) {
                 for (int zOffset = 0; zOffset < width; zOffset++) {
                     BlockPos pos = switch (axis) {
@@ -198,8 +200,9 @@ public class CMConnectivityHandler {
                                 break Search;
                         }
                     }
-//                    if (controller instanceof LadleBlockEntity ladleBE && ladleBE.getTank() != null && ladleBE.getTank().g)
-//                            break Search;
+                    // if (controller instanceof LadleBlockEntity ladleBE && ladleBE.getTank() !=
+                    // null && ladleBE.getTank().g)
+                    // break Search;
                 }
             }
             amount += width * width;
@@ -260,7 +263,8 @@ public class CMConnectivityHandler {
     }
 
     // tryReconnect helps whenever only a few tanks have been removed
-    private static <T extends BlockEntity & IMultiBlockEntityContainer> void splitMultiAndInvalidate(T be, @Nullable SearchCache<T> cache, boolean tryReconnect) {
+    private static <T extends BlockEntity & IMultiBlockEntityContainer> void splitMultiAndInvalidate(T be,
+            @Nullable SearchCache<T> cache, boolean tryReconnect) {
         Level level = be.getLevel();
         if (level == null)
             return;
@@ -293,7 +297,6 @@ public class CMConnectivityHandler {
             }
         }
 
-
         for (int yOffset = 0; yOffset < height; yOffset++) {
             for (int xOffset = 0; xOffset < width; xOffset++) {
                 for (int zOffset = 0; zOffset < width; zOffset++) {
@@ -315,7 +318,6 @@ public class CMConnectivityHandler {
                     partAt.setExtraData((controllerBE == null ? null : controllerBE.getExtraData()));
                     partAt.removeController(true);
 
-
                     // Redistribute all fluids drained from main tank
                     // Making this generic would be a rather large mess, unfortunately
                     if (!toDistribute.isEmpty() && partAt != be) {
@@ -328,7 +330,8 @@ public class CMConnectivityHandler {
                             }
 
                             FluidStack copy = original.copy();
-                            FoundryTank tank = (partAt instanceof CrucibleBlockEntity ifluidPart ? ifluidPart.getTank() : null);
+                            FoundryTank tank = (partAt instanceof CrucibleBlockEntity ifluidPart ? ifluidPart.getTank()
+                                    : null);
 
                             int split = Math.min(maxCapacity, original.getAmount());
                             copy.setAmount(split);
@@ -355,11 +358,8 @@ public class CMConnectivityHandler {
             }
         }
 
-        if (be instanceof CrucibleBlockEntity) {
-            be.getCapability(ForgeCapabilities.ITEM_HANDLER)
-                    .invalidate();
-            be.getCapability(ForgeCapabilities.FLUID_HANDLER)
-                    .invalidate();
+        if (be instanceof CrucibleBlockEntity crucible) {
+            crucible.invalidateCapabilities();
         }
 
         if (tryReconnect)
@@ -371,16 +371,18 @@ public class CMConnectivityHandler {
     }
 
     @Nullable
-    public static <T extends BlockEntity & IMultiBlockEntityContainer> T partAt(BlockEntityType<?> type, BlockGetter level,
-                                                                                BlockPos pos) {
+    public static <T extends BlockEntity & IMultiBlockEntityContainer> T partAt(BlockEntityType<?> type,
+            BlockGetter level,
+            BlockPos pos) {
         BlockEntity be = level.getBlockEntity(pos);
         if (be != null && be.getType() == type && !be.isRemoved())
             return checked(be);
         return null;
     }
 
-    public static <T extends BlockEntity & IMultiBlockEntityContainer> boolean isConnected(BlockGetter level, BlockPos pos,
-                                                                                           BlockPos other) {
+    public static <T extends BlockEntity & IMultiBlockEntityContainer> boolean isConnected(BlockGetter level,
+            BlockPos pos,
+            BlockPos other) {
         T one = checked(level.getBlockEntity(pos));
         T two = checked(level.getBlockEntity(other));
         if (one == null || two == null)

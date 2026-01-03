@@ -1,0 +1,25 @@
+{
+  "id": "createmetallurgy:crafting/content/foundry_mixer",
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "A": {
+      "item": "create:cogwheel"
+    },
+    "B": {
+      "item": "create:copper_casing"
+    },
+    "C": {
+      "item": "createmetallurgy:sturdy_whisk"
+    }
+  },
+  "pattern": [
+    "A",
+    "B",
+    "C"
+  ],
+  "result": {
+    "id": "createmetallurgy:foundry_mixer"
+  },
+  "show_notification": true
+}

@@ -14,7 +14,7 @@ public class CastingBasinRecipe extends CastingRecipe {
 
     @Override
     public RecipeSerializer<?> getSerializer() {
-        return BuiltInRegistries.RECIPE_SERIALIZER.get(CreateMetallurgy.genRL("casting_in_basin"));
+        return BuiltInRegistries.RECIPE_SERIALIZER.get(CreateMetallurgy.asResource("casting_in_basin"));
     }
 
     @Override

@@ -22,7 +22,8 @@ import net.minecraft.world.level.pathfinder.PathComputationType;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
-public class LightBulbBlock extends WrenchableDirectionalBlock implements IBE<LightBulbBlockEntity>, SimpleWaterloggedBlock {
+public class LightBulbBlock extends WrenchableDirectionalBlock
+        implements IBE<LightBulbBlockEntity>, SimpleWaterloggedBlock {
 
     public static final IntegerProperty LEVEL = BlockStateProperties.LEVEL;
     public static final BooleanProperty WATERLOGGED = BlockStateProperties.WATERLOGGED;
@@ -50,7 +51,6 @@ public class LightBulbBlock extends WrenchableDirectionalBlock implements IBE<Li
                 .setValue(LEVEL, signal);
     }
 
-
     protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
         builder.add(LEVEL, WATERLOGGED);
         super.createBlockStateDefinition(builder);
@@ -62,7 +62,8 @@ public class LightBulbBlock extends WrenchableDirectionalBlock implements IBE<Li
     }
 
     @Override
-    public BlockState updateShape(BlockState pState, Direction pDirection, BlockState pNeighborState, LevelAccessor pLevel, BlockPos pCurrentPos, BlockPos pNeighborPos) {
+    public BlockState updateShape(BlockState pState, Direction pDirection, BlockState pNeighborState,
+            LevelAccessor pLevel, BlockPos pCurrentPos, BlockPos pNeighborPos) {
         if (pState.getValue(WATERLOGGED)) {
             pLevel.scheduleTick(pCurrentPos, Fluids.WATER, Fluids.WATER.getTickDelay(pLevel));
         }
@@ -81,7 +82,8 @@ public class LightBulbBlock extends WrenchableDirectionalBlock implements IBE<Li
     }
 
     @Override
-    public void neighborChanged(BlockState state, Level worldIn, BlockPos pos, Block block, BlockPos fromPos, boolean isMoving) {
+    public void neighborChanged(BlockState state, Level worldIn, BlockPos pos, Block block, BlockPos fromPos,
+            boolean isMoving) {
         if (worldIn.isClientSide())
             return;
 
@@ -100,13 +102,11 @@ public class LightBulbBlock extends WrenchableDirectionalBlock implements IBE<Li
                 be -> be.transmit(signal));
     }
 
-
     @Override
     public boolean canConnectRedstone(BlockState state, BlockGetter world, BlockPos pos, Direction side) {
         return true;
     }
 
-    @Override
     public boolean isPathfindable(BlockState state, BlockGetter reader, BlockPos pos, PathComputationType type) {
         return false;
     }

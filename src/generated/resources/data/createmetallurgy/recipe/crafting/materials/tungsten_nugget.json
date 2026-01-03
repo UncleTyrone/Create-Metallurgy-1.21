@@ -1,0 +1,14 @@
+{
+  "id": "createmetallurgy:crafting/materials/tungsten_nugget",
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "createmetallurgy:tungsten_ingot"
+    }
+  ],
+  "result": {
+    "count": 9,
+    "id": "createmetallurgy:tungsten_nugget"
+  }
+}

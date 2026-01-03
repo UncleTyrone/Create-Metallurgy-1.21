@@ -1,0 +1,15 @@
+{
+  "id": "createmetallurgy:grinding/waxed_weathered_cut_copper_slab",
+  "type": "createmetallurgy:grinding",
+  "ingredients": [
+    {
+      "item": "minecraft:waxed_weathered_cut_copper_slab"
+    }
+  ],
+  "processingTime": 50,
+  "results": [
+    {
+      "id": "minecraft:weathered_cut_copper_slab"
+    }
+  ]
+}

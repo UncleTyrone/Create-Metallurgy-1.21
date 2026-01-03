@@ -1,6 +1,5 @@
 package fr.lucreeper74.createmetallurgy.content.blocks.foundry_basin;
 
-import com.simibubi.create.Create;
 import com.simibubi.create.content.kinetics.belt.behaviour.DirectBeltInputBehaviour;
 import com.simibubi.create.content.kinetics.mixer.MechanicalMixerBlockEntity;
 import com.simibubi.create.content.processing.basin.BasinBlockEntity;
@@ -16,6 +15,7 @@ import net.createmod.catnip.nbt.NBTHelper;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
@@ -25,13 +25,12 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraftforge.common.capabilities.ForgeCapabilities;
-import net.minecraftforge.common.util.LazyOptional;
-import net.minecraftforge.fluids.FluidStack;
-import net.minecraftforge.fluids.capability.IFluidHandler;
-import net.minecraftforge.fluids.capability.templates.FluidTank;
-import net.minecraftforge.items.IItemHandlerModifiable;
-import net.minecraftforge.items.ItemStackHandler;
+import net.neoforged.neoforge.capabilities.Capabilities;
+import net.neoforged.neoforge.fluids.FluidStack;
+import net.neoforged.neoforge.fluids.capability.IFluidHandler;
+import net.neoforged.neoforge.items.IItemHandler;
+import net.neoforged.neoforge.items.IItemHandlerModifiable;
+import net.neoforged.neoforge.items.wrapper.CombinedInvWrapper;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -57,33 +56,27 @@ public class FoundryBasinBlockEntity extends BasinBlockEntity {
                 .forbidInsertion();
         behaviours.add(inputTank);
         behaviours.add(outputTank);
-
-        fluidCapability = LazyOptional.of(() -> {
-            LazyOptional<? extends IFluidHandler> inputCap = inputTank.getCapability();
-            LazyOptional<? extends IFluidHandler> outputCap = outputTank.getCapability();
-            return new CombinedTankWrapper(outputCap.orElse(null), inputCap.orElse(null));
-        });
     }
 
     @Override
-    protected void read(CompoundTag compound, boolean clientPacket) {
-        super.read(compound, clientPacket);
+    protected void read(CompoundTag compound, HolderLookup.Provider registries, boolean clientPacket) {
+        super.read(compound, registries, clientPacket);
 
         if (!clientPacket)
             return;
         NBTHelper.iterateCompoundList(compound.getList("VisualizedFluids", Tag.TAG_COMPOUND),
                 c -> visualizedOutputFluids
-                        .add(IntAttached.with(OUTPUT_ANIMATION_TIME, FluidStack.loadFluidStackFromNBT(c))));
+                        .add(IntAttached.with(OUTPUT_ANIMATION_TIME, FluidStack.parseOptional(registries, c))));
     }
 
     @Override
-    public void write(CompoundTag compound, boolean clientPacket) {
-        super.write(compound, clientPacket);
+    public void write(CompoundTag compound, HolderLookup.Provider registries, boolean clientPacket) {
+        super.write(compound, registries, clientPacket);
 
         if (!clientPacket)
             return;
-        compound.put("VisualizedFluids", NBTHelper.writeCompoundList(visualizedOutputFluids, ia -> ia.getValue()
-                .writeToNBT(new CompoundTag())));
+        compound.put("VisualizedFluids", NBTHelper.writeCompoundList(visualizedOutputFluids,
+                ia -> (CompoundTag) ia.getValue().saveOptional(registries)));
         visualizedOutputFluids.clear();
     }
 
@@ -124,11 +117,11 @@ public class FoundryBasinBlockEntity extends BasinBlockEntity {
         if (facing == clickedFace) {
             level.setBlockAndUpdate(worldPosition, blockState.setValue(FoundryBasinBlock.FACING, Direction.DOWN));
             level.playSound(null, worldPosition, SoundEvents.NETHERITE_BLOCK_HIT,
-                    SoundSource.BLOCKS, .5f, .5f + Create.RANDOM.nextFloat());
+                    SoundSource.BLOCKS, .5f, .5f + level.random.nextFloat());
         } else {
             level.setBlockAndUpdate(worldPosition, blockState.setValue(FoundryBasinBlock.FACING, clickedFace));
             level.playSound(null, worldPosition, SoundEvents.NETHERITE_BLOCK_STEP,
-                    SoundSource.BLOCKS, .5f, .5f + Create.RANDOM.nextFloat());
+                    SoundSource.BLOCKS, .5f, .5f + level.random.nextFloat());
         }
     }
 
@@ -140,15 +133,14 @@ public class FoundryBasinBlockEntity extends BasinBlockEntity {
         BlockPos output = worldPosition.below().relative(direction);
         BlockEntity be = level.getBlockEntity(output);
 
-        DirectBeltInputBehaviour directBeltInputBehaviour =
-                BlockEntityBehaviour.get(level, output, DirectBeltInputBehaviour.TYPE);
+        DirectBeltInputBehaviour directBeltInputBehaviour = BlockEntityBehaviour.get(level, output,
+                DirectBeltInputBehaviour.TYPE);
         if (directBeltInputBehaviour == null || !directBeltInputBehaviour.canInsertFromSide(direction))
             return;
 
         IFluidHandler targetTank = be == null ? null
-                : be.getCapability(ForgeCapabilities.FLUID_HANDLER, direction.getOpposite())
-                .orElse(null);
-        IFluidHandler basinTank = getOutputTank().getCapability().orElse(null);
+                : level.getCapability(Capabilities.FluidHandler.BLOCK, output, direction.getOpposite());
+        IFluidHandler basinTank = getOutputTank().getCapability();
 
         if (targetTank == null || basinTank == null)
             return;
@@ -159,13 +151,15 @@ public class FoundryBasinBlockEntity extends BasinBlockEntity {
             return;
 
         int filled = targetTank instanceof SmartFluidTankBehaviour.InternalFluidHandler
-                ? ((SmartFluidTankBehaviour.InternalFluidHandler) targetTank).forceFill(drained, IFluidHandler.FluidAction.SIMULATE)
+                ? ((SmartFluidTankBehaviour.InternalFluidHandler) targetTank).forceFill(drained,
+                        IFluidHandler.FluidAction.SIMULATE)
                 : targetTank.fill(drained, IFluidHandler.FluidAction.SIMULATE);
 
         if (filled > 0) {
             drained = basinTank.drain(filled, IFluidHandler.FluidAction.EXECUTE);
             if (targetTank instanceof SmartFluidTankBehaviour.InternalFluidHandler)
-                ((SmartFluidTankBehaviour.InternalFluidHandler) targetTank).forceFill(drained, IFluidHandler.FluidAction.EXECUTE);
+                ((SmartFluidTankBehaviour.InternalFluidHandler) targetTank).forceFill(drained,
+                        IFluidHandler.FluidAction.EXECUTE);
             else
                 targetTank.fill(drained, IFluidHandler.FluidAction.EXECUTE);
 
@@ -179,14 +173,22 @@ public class FoundryBasinBlockEntity extends BasinBlockEntity {
         return outputTank;
     }
 
+    public IItemHandler getItemHandler() {
+        return new CombinedInvWrapper(inputInventory, outputInventory);
+    }
+
+    public IFluidHandler getFluidHandler() {
+        return new CombinedTankWrapper(outputTank.getCapability(), inputTank.getCapability());
+    }
+
     // CLIENT THINGS -----------------
     @Override
     public boolean addToGoggleTooltip(List<Component> tooltip, boolean isPlayerSneaking) {
         CMLang.translate("gui.goggles.foundrybasin_contents")
                 .forGoggles(tooltip);
 
-        IItemHandlerModifiable items = itemCapability.orElse(new ItemStackHandler());
-        IFluidHandler fluids = fluidCapability.orElse(new FluidTank(0));
+        IItemHandlerModifiable items = inputInventory;
+        IFluidHandler fluids = getFluidHandler();
         boolean isEmpty = true;
 
         for (int i = 0; i < items.getSlots(); i++) {

@@ -1,0 +1,27 @@
+{
+  "id": "createmetallurgy:casting_in_table/osmium/gear",
+  "type": "createmetallurgy:casting_in_table",
+  "conditions": [
+    {
+      "type": "neoforge:not",
+      "value": {
+        "type": "neoforge:tag_empty",
+        "tag": "c:gears/osmium"
+      }
+    }
+  ],
+  "ingredients": [
+    {
+      "item": "createmetallurgy:graphite_gear_mold"
+    },
+    {
+      "amount": 360,
+      "fluid": "createmetallurgy:molten_osmium",
+      "nbt": {}
+    }
+  ],
+  "processingTime": 240,
+  "result": {
+    "tag": "c:gears/osmium"
+  }
+}

@@ -1,0 +1,86 @@
+{
+  "id": "createmetallurgy:sequenced_assembly/industrial_crucible",
+  "type": "create:sequenced_assembly",
+  "ingredient": {
+    "item": "minecraft:deepslate_bricks"
+  },
+  "loops": 1,
+  "results": [
+    {
+      "id": "createmetallurgy:industrial_crucible"
+    }
+  ],
+  "sequence": [
+    {
+      "type": "create:deploying",
+      "ingredients": [
+        {
+          "item": "createmetallurgy:incomplete_industrial_crucible"
+        },
+        [
+          {
+            "item": "createmetallurgy:refractory_mortar"
+          }
+        ]
+      ],
+      "results": [
+        {
+          "id": "createmetallurgy:incomplete_industrial_crucible"
+        }
+      ]
+    },
+    {
+      "type": "create:deploying",
+      "ingredients": [
+        {
+          "item": "createmetallurgy:incomplete_industrial_crucible"
+        },
+        [
+          {
+            "tag": "c:plates/obdurium"
+          }
+        ]
+      ],
+      "results": [
+        {
+          "id": "createmetallurgy:incomplete_industrial_crucible"
+        }
+      ]
+    },
+    {
+      "type": "createmetallurgy:grinding",
+      "ingredients": [
+        {
+          "item": "createmetallurgy:incomplete_industrial_crucible"
+        }
+      ],
+      "processingTime": 80,
+      "results": [
+        {
+          "id": "createmetallurgy:incomplete_industrial_crucible"
+        }
+      ]
+    },
+    {
+      "type": "create:filling",
+      "ingredients": [
+        {
+          "item": "createmetallurgy:incomplete_industrial_crucible"
+        },
+        {
+          "amount": 30,
+          "fluid": "createmetallurgy:molten_tungsten",
+          "nbt": {}
+        }
+      ],
+      "results": [
+        {
+          "id": "createmetallurgy:incomplete_industrial_crucible"
+        }
+      ]
+    }
+  ],
+  "transitionalItem": {
+    "item": "createmetallurgy:incomplete_industrial_crucible"
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "id": "createmetallurgy:grinding/waxed_exposed_cut_copper_stairs",
+  "type": "createmetallurgy:grinding",
+  "ingredients": [
+    {
+      "item": "minecraft:waxed_exposed_cut_copper_stairs"
+    }
+  ],
+  "processingTime": 50,
+  "results": [
+    {
+      "id": "minecraft:exposed_cut_copper_stairs"
+    }
+  ]
+}

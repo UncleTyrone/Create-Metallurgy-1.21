@@ -1,0 +1,19 @@
+{
+  "id": "createmetallurgy:crafting/materials/coke_block",
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "C": {
+      "item": "createmetallurgy:coke"
+    }
+  },
+  "pattern": [
+    "CCC",
+    "CCC",
+    "CCC"
+  ],
+  "result": {
+    "id": "createmetallurgy:coke_block"
+  },
+  "show_notification": true
+}

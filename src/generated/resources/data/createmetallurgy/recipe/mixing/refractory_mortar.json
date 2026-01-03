@@ -1,0 +1,25 @@
+{
+  "id": "createmetallurgy:mixing/refractory_mortar",
+  "type": "create:mixing",
+  "ingredients": [
+    {
+      "tag": "c:sand"
+    },
+    {
+      "tag": "c:sand"
+    },
+    {
+      "item": "minecraft:clay_ball"
+    },
+    {
+      "amount": 100,
+      "fluid": "minecraft:water",
+      "nbt": {}
+    }
+  ],
+  "results": [
+    {
+      "id": "createmetallurgy:refractory_mortar"
+    }
+  ]
+}

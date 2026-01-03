@@ -2,8 +2,7 @@ package fr.lucreeper74.createmetallurgy.content.blocks.labelling_station;
 
 import fr.lucreeper74.createmetallurgy.content.entities.ladle.LadleItem;
 import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.items.IItemHandlerModifiable;
-import net.minecraftforge.items.ItemHandlerHelper;
+import net.neoforged.neoforge.items.IItemHandlerModifiable;
 import org.jetbrains.annotations.NotNull;
 
 public class LadleItemHandler implements IItemHandlerModifiable {
@@ -52,7 +51,7 @@ public class LadleItemHandler implements IItemHandlerModifiable {
         blockEntity.updateClipBoardAddresses();
         blockEntity.attemptToSend();
 
-        return ItemHandlerHelper.copyStackWithSize(stack, stack.getCount() - 1);
+        return stack.copyWithCount(stack.getCount() - 1);
     }
 
     @Override
